@@ -5,10 +5,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:ripple/core/models/post_model.dart';
 import 'package:ripple/core/models/user_model.dart';
 import 'package:ripple/core/network/local/cache_helper.dart';
 import 'package:ripple/core/network/post_repository.dart';
+import 'package:ripple/core/network/service/notification_service.dart';
 import 'package:ripple/core/network/user_repository.dart';
 import 'package:ripple/core/utils/constants/routes.dart';
 import 'package:ripple/core/utils/constants/translations.dart';
@@ -96,14 +98,12 @@ class HomeCubit extends Cubit<HomeStates> {
 
   Future<void> login() async {
     emit(HomeLoginLoadingState());
-
     final email = loginEmailController.text.trim();
     final password = loginPasswordController.text.trim();
-
     try {
       final user = await _signInUser(email, password);
       final refreshedUser = await _reloadUser(user);
-
+      await OneSignal.login(refreshedUser.uid);
       emit(HomeLoginSuccessState(refreshedUser));
     } on FirebaseAuthException catch (e) {
       emit(HomeLoginErrorState(_mapAuthError(e)));
@@ -338,6 +338,7 @@ class HomeCubit extends Cubit<HomeStates> {
 
   Future<void> togglePostLike(PostModel post) async {
     if (userModel == null) return;
+    final isLiked = post.likes.contains(userModel!.uid);
 
     try {
       await postRepo.toggleLike(
@@ -345,6 +346,21 @@ class HomeCubit extends Cubit<HomeStates> {
         currentUserId: userModel!.uid!,
         likes: post.likes,
       );
+      if (!isLiked && post.userId != userModel!.uid) {
+        await NotificationService.send(
+          receiverId: post.userId,
+          title: userModel!.username!,
+          contents: {
+            "en": "liked your post ❤️",
+            "ar": "أعجب بمنشورك ❤️",
+          },
+          data: {
+            "type": "like",
+            "postId": post.postId,
+            "senderId": userModel!.uid,
+          },
+        );
+      }
       emit(HomeLikePostSuccessState());
     } catch (e) {
       emit(HomeLikePostErrorState(e.toString()));
@@ -353,7 +369,7 @@ class HomeCubit extends Cubit<HomeStates> {
 
   final commentController = TextEditingController();
 
-  Future<void> addComment(String postId) async {
+  Future<void> addComment(String postId, String postOwnerId) async {
     if (userModel == null) {
       emit(HomeAddCommentErrorState("User not logged in"));
       return;
@@ -367,6 +383,21 @@ class HomeCubit extends Cubit<HomeStates> {
         userProfilePic: userModel!.photoUrl!,
         text: commentController.text.trim(),
       );
+      if (postOwnerId != userModel!.uid) {
+        await NotificationService.send(
+          receiverId: postOwnerId,
+          title: userModel!.username!,
+          contents: {
+            "en": "commented on your post 💬",
+            "ar": "علّق على منشورك 💬",
+          },
+          data: {
+            "type": "comment",
+            "postId": postId,
+            "senderId": userModel!.uid,
+          },
+        );
+      }
       commentController.clear();
       emit(HomeAddCommentSuccessState());
     } catch (e) {
@@ -379,6 +410,18 @@ class HomeCubit extends Cubit<HomeStates> {
     emit(HomeFollowUserLoadingState());
     try {
       await userRepo.followUser(userModel!.uid!, userIdToFollow);
+      await NotificationService.send(
+        receiverId: userIdToFollow,
+        title: userModel!.username!,
+        contents: {
+          "en": "started following you 👤",
+          "ar": "بدأ بمتابعتك 👤",
+        },
+        data: {
+          "type": "follow",
+          "senderId": userModel!.uid,
+        },
+      );
       await getUserData();
       emit(HomeFollowUserSuccessState());
     } catch (e) {
@@ -411,6 +454,7 @@ class HomeCubit extends Cubit<HomeStates> {
 
   void logout(BuildContext context) {
     FirebaseAuth.instance.signOut().then((value) {
+      OneSignal.logout();
       if (context.mounted) {
         context.pushReplacement<Object>(Routes.login);
       }

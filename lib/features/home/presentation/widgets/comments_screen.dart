@@ -166,7 +166,10 @@ class _CommentsScreenState extends State<CommentsScreen> {
                     IconButton(
                       onPressed: () {
                         if (homeCubit.commentController.text.isNotEmpty) {
-                          homeCubit.addComment(initialPost.postId);
+                          homeCubit.addComment(
+                            initialPost.postId,
+                            initialPost.userId,
+                          );
                         }
                       },
                       icon: const Icon(Icons.send),

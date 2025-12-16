@@ -105,8 +105,9 @@ class ProfileHeader extends StatelessWidget {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  isFollowing ? Colors.grey : ColorsManager.primary,
+              backgroundColor: isFollowing
+                  ? Colors.grey
+                  : ColorsManager.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
