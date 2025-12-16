@@ -90,7 +90,7 @@ class ProfileHeader extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: ColorsManager.primary,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
             child: Text(appTranslation().get('edit_profile')),
@@ -108,9 +108,6 @@ class ProfileHeader extends StatelessWidget {
               backgroundColor: isFollowing
                   ? Colors.grey
                   : ColorsManager.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
             ),
             child: Text(buttonText),
           ),
