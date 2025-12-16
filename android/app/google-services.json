@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "384859686586",
+    "project_id": "ripple-bdb2b",
+    "storage_bucket": "ripple-bdb2b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:384859686586:android:2d08642fca606dce97a483",
+        "android_client_info": {
+          "package_name": "com.ripple"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCzLT-DwCcXQPXUM-6FAWXR7yuJaTsnreo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
