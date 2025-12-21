@@ -1,8 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:ripple/core/di/injections.dart';
 import 'package:ripple/core/network/local/cache_helper.dart';
 import 'package:ripple/core/network/service/notification_handler.dart';
@@ -21,9 +21,8 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  OneSignal.initialize("8ed8476b-ae5d-4ac6-8f0d-2298abd2018b");
-  OneSignal.Notifications.requestPermission(true);
-  NotificationHandler.initialize();
+  NotificationHandler.initFirebaseMessaging();
+  FirebaseMessaging.onBackgroundMessage(NotificationHandler.messageHandler);
   Bloc.observer = MyBlocObserver();
   final bool isDark = CacheHelper.getData(key: 'isDark') ?? false;
   final bool isArabic = CacheHelper.getData(key: 'isArabicLang') ?? false;

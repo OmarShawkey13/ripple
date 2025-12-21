@@ -51,5 +51,9 @@
   "delete_post": "Delete Post",
   "add_comment": "Add a comment...",
   "username": "Username",
-  "bio": "Bio"
+  "bio": "Bio",
+  "notifications": "Notifications",
+  "no_notifications": "No notifications yet",
+  "delete": "Delete",
+  "copied": "Copied to clipboard"
 }

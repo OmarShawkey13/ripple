@@ -51,5 +51,9 @@
   "delete_post": "حذف المنشور",
   "add_comment": "أضف تعليقًا...",
   "username": "اسم المستخدم",
-  "bio": "نبذة"
+  "bio": "نبذة",
+  "notifications": "الإشعارات",
+  "no_notifications": "لا توجد إشعارات بعد",
+  "delete": "حذف",
+  "copied": "تم النسخ إلى الحافظة"
 }

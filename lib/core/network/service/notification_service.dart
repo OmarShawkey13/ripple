@@ -1,39 +1,171 @@
 import 'dart:convert';
+import 'dart:developer';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:googleapis_auth/auth_io.dart' as auth;
 import 'package:http/http.dart' as http;
+import 'package:ripple/core/models/post_model.dart';
+import 'package:ripple/core/models/user_model.dart';
+import 'package:ripple/core/utils/constants/routes.dart';
 
 class NotificationService {
-  // 🔐 REST API KEY من OneSignal (انت حاطط المفتاح الصحيح)
-  static const String _restApiKey =
-      "os_v2_app_r3meo25olvfmndynekmkxuqbrmz7xtk2p7wughelyrdn4kxixcict3yg6h73omd5rwvmhnkjwsrglwhbbdfy2cvoh4bfkv6vkxq7fzy";
+  static const String _projectId = 'ripple-bdb2b';
 
-  // 📌 OneSignal App ID الحقيقي:
-  static const String _appId = "8ed8476b-ae5d-4ac6-8f0d-2298abd2018b";
+  static Future<String> getAccessToken() async {
+    final jsonString = await rootBundle.loadString(
+      'assets/firebase/ripple-bdb2b-a82900c2a752.json',
+    );
+
+    final accountCredentials = auth.ServiceAccountCredentials.fromJson(
+      jsonString,
+    );
+
+    final scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
+    final client = await auth.clientViaServiceAccount(
+      accountCredentials,
+      scopes,
+    );
+
+    return client.credentials.accessToken.data;
+  }
+
+  static Future<void> sendNotification({
+    required String token,
+    required String title,
+    required String body,
+    required Map<String, String> data,
+  }) async {
+    try {
+      final String accessToken = await getAccessToken();
+      const String fcmUrl =
+          'https://fcm.googleapis.com/v1/projects/$_projectId/messages:send';
+
+      final response = await http.post(
+        Uri.parse(fcmUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'message': {
+            'token': token,
+            'notification': {
+              'title': title,
+              'body': body,
+            },
+            'data': data,
+            'android': {
+              'notification': {
+                "sound": "custom_sound",
+                'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+                'channel_id': 'high_importance_channel',
+              },
+            },
+            'apns': {
+              'payload': {
+                'aps': {"sound": "custom_sound.caf", 'content-available': 1},
+              },
+            },
+          },
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        log('Notification sent successfully');
+      } else {
+        log('Failed to send notification: ${response.body}');
+      }
+    } catch (e) {
+      log('Error sending notification: $e');
+    }
+  }
 
   static Future<void> send({
     required String receiverId,
     required String title,
     required Map<String, String> contents,
-    Map<String, dynamic>? data,
+    required Map<String, dynamic> data,
   }) async {
-    final payload = {
-      "app_id": _appId,
-      "include_external_user_ids": [receiverId],
-      "headings": {
-        "en": title,
-        "ar": title,
-      },
-      "contents": contents,
-      "data": data,
-      "priority": 10,
-    };
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(receiverId)
+          .get();
 
-    await http.post(
-      Uri.parse("https://api.onesignal.com/notifications"),
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        "Authorization": "Basic $_restApiKey",
-      },
-      body: jsonEncode(payload),
-    );
+      if (!userDoc.exists) return;
+
+      final user = UserModel.fromMap(userDoc.data()!, receiverId);
+      final token = user.fcmToken;
+
+      if (token != null && token.isNotEmpty) {
+        // Use English content by default, or the first available
+        final body = contents['en'] ?? contents.values.first;
+
+        // Convert data values to String as FCM data expects Map<String, String>
+        final stringData = data.map(
+          (key, value) => MapEntry(key, value.toString()),
+        );
+
+        await sendNotification(
+          token: token,
+          title: title,
+          body: body,
+          data: stringData,
+        );
+      }
+    } catch (e) {
+      log("Error fetching user for notification: $e");
+    }
+  }
+
+  static Future<void> handleNotification(
+    BuildContext context,
+    Map<String, dynamic> data,
+  ) async {
+    log("Handling notification with data: $data");
+
+    final String? type = data['type'];
+    final String? postId = data['postId'];
+    final String? senderId = data['senderId'];
+
+    if (type == 'comment' || type == 'like') {
+      if (postId != null) {
+        try {
+          // Fetch PostModel to navigate to CommentsScreen
+          final doc = await FirebaseFirestore.instance
+              .collection('posts')
+              .doc(postId)
+              .get();
+          if (doc.exists) {
+            final post = PostModel.fromMap(doc.data()!, doc.id);
+            if (context.mounted) {
+              Navigator.pushNamed(context, Routes.comments, arguments: post);
+            }
+          }
+        } catch (e) {
+          log("Error fetching post for notification: $e");
+        }
+      }
+    } else if (type == 'follow') {
+      if (senderId != null) {
+        try {
+          // Fetch UserModel to navigate to ProfileScreen
+          final doc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(senderId)
+              .get();
+          if (doc.exists) {
+            final user = UserModel.fromMap(doc.data()!, doc.id);
+            if (context.mounted) {
+              Navigator.pushNamed(context, Routes.profile, arguments: user);
+            }
+          }
+        } catch (e) {
+          log("Error fetching user for notification: $e");
+        }
+      }
+    }
   }
 }

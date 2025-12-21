@@ -20,7 +20,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    homeCubit.getUserData().then((value) => homeCubit.getPosts());
+    homeCubit.getUserData().then((value) {
+      homeCubit.getPosts();
+      homeCubit.getNotifications(); // Fetch notifications on start
+    });
   }
 
   @override
@@ -32,14 +35,52 @@ class _HomeScreenState extends State<HomeScreen> {
           current is HomeGetPostsErrorState ||
           current is HomeGetUserSuccessState ||
           current is HomeGetUserErrorState ||
-          current is HomeLikePostSuccessState || // To rebuild on like
-          current is HomeChangeThemeState,
+          current is HomeLikePostSuccessState ||
+          current is HomeChangeThemeState ||
+          current is HomeGetNotificationsSuccessState,
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
             title: Text(
               appTranslation().get("app_name"),
             ),
+            actions: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      context.push<Object>(Routes.notifications);
+                    },
+                    icon: const Icon(Icons.notifications),
+                  ),
+                  if (homeCubit.unreadNotificationsCount > 0)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: ColorsManager.primary,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${homeCubit.unreadNotificationsCount}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
           ),
           drawer: const HomeDrawer(),
           body: state is HomeGetPostsLoadingState

@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:ripple/core/models/notification_model.dart';
 import 'package:ripple/core/models/post_model.dart';
 
 abstract class HomeStates {}
@@ -111,6 +112,16 @@ class HomeAddCommentErrorState extends HomeStates {
   HomeAddCommentErrorState(this.error);
 }
 
+class HomeDeleteCommentLoadingState extends HomeStates {}
+
+class HomeDeleteCommentSuccessState extends HomeStates {}
+
+class HomeDeleteCommentErrorState extends HomeStates {
+  final String error;
+
+  HomeDeleteCommentErrorState(this.error);
+}
+
 //myPosts
 class HomeGetMyPostsLoadingState extends HomeStates {}
 
@@ -186,4 +197,19 @@ class HomeDeletePostErrorState extends HomeStates {
   final String error;
 
   HomeDeletePostErrorState(this.error);
+}
+
+// Notifications
+class HomeGetNotificationsLoadingState extends HomeStates {}
+
+class HomeGetNotificationsSuccessState extends HomeStates {
+  final List<NotificationModel> notifications;
+
+  HomeGetNotificationsSuccessState(this.notifications);
+}
+
+class HomeGetNotificationsErrorState extends HomeStates {
+  final String error;
+
+  HomeGetNotificationsErrorState(this.error);
 }

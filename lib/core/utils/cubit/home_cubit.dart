@@ -2,13 +2,16 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
-import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:ripple/core/models/comment_model.dart';
+import 'package:ripple/core/models/notification_model.dart';
 import 'package:ripple/core/models/post_model.dart';
 import 'package:ripple/core/models/user_model.dart';
 import 'package:ripple/core/network/local/cache_helper.dart';
+import 'package:ripple/core/network/notification_repository.dart';
 import 'package:ripple/core/network/post_repository.dart';
 import 'package:ripple/core/network/service/notification_service.dart';
 import 'package:ripple/core/network/user_repository.dart';
@@ -26,6 +29,7 @@ class HomeCubit extends Cubit<HomeStates> {
 
   static HomeCubit get(BuildContext context) => BlocProvider.of(context);
   final PostRepository postRepo = PostRepository();
+  final NotificationRepository notificationRepo = NotificationRepository();
 
   bool _isDarkMode = false;
 
@@ -103,7 +107,6 @@ class HomeCubit extends Cubit<HomeStates> {
     try {
       final user = await _signInUser(email, password);
       final refreshedUser = await _reloadUser(user);
-      await OneSignal.login(refreshedUser.uid);
       emit(HomeLoginSuccessState(refreshedUser));
     } on FirebaseAuthException catch (e) {
       emit(HomeLoginErrorState(_mapAuthError(e)));
@@ -259,8 +262,19 @@ class HomeCubit extends Cubit<HomeStates> {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     try {
       final fresh = await userRepo.getUser(uid);
-      userModel = fresh;
-      await cacheUser(fresh);
+
+      // Update FCM Token
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null && fresh!.fcmToken != token) {
+        final updatedUser = fresh.copyWith(fcmToken: token);
+        await userRepo.updateUser(updatedUser);
+        userModel = updatedUser;
+        await cacheUser(updatedUser);
+      } else {
+        userModel = fresh;
+        await cacheUser(fresh);
+      }
+
       emit(HomeGetUserSuccessState());
     } catch (e) {
       debugPrint("Error fetching user data: $e");
@@ -357,8 +371,17 @@ class HomeCubit extends Cubit<HomeStates> {
           data: {
             "type": "like",
             "postId": post.postId,
-            "senderId": userModel!.uid,
+            "senderId": userModel!.uid!,
           },
+        );
+        await notificationRepo.sendNotification(
+          senderId: userModel!.uid!,
+          senderName: userModel!.username!,
+          senderProfilePic: userModel!.photoUrl!,
+          receiverId: post.userId,
+          type: 'like',
+          postId: post.postId,
+          text: 'liked your post ❤️',
         );
       }
       emit(HomeLikePostSuccessState());
@@ -394,14 +417,33 @@ class HomeCubit extends Cubit<HomeStates> {
           data: {
             "type": "comment",
             "postId": postId,
-            "senderId": userModel!.uid,
+            "senderId": userModel!.uid!,
           },
+        );
+        await notificationRepo.sendNotification(
+          senderId: userModel!.uid!,
+          senderName: userModel!.username!,
+          senderProfilePic: userModel!.photoUrl!,
+          receiverId: postOwnerId,
+          type: 'comment',
+          postId: postId,
+          text: 'commented on your post: ${commentController.text.trim()}',
         );
       }
       commentController.clear();
       emit(HomeAddCommentSuccessState());
     } catch (e) {
       emit(HomeAddCommentErrorState(e.toString()));
+    }
+  }
+
+  Future<void> deleteComment(String postId, CommentModel comment) async {
+    emit(HomeDeleteCommentLoadingState());
+    try {
+      await postRepo.deleteComment(postId: postId, comment: comment);
+      emit(HomeDeleteCommentSuccessState());
+    } catch (e) {
+      emit(HomeDeleteCommentErrorState(e.toString()));
     }
   }
 
@@ -419,8 +461,16 @@ class HomeCubit extends Cubit<HomeStates> {
         },
         data: {
           "type": "follow",
-          "senderId": userModel!.uid,
+          "senderId": userModel!.uid!,
         },
+      );
+      await notificationRepo.sendNotification(
+        senderId: userModel!.uid!,
+        senderName: userModel!.username!,
+        senderProfilePic: userModel!.photoUrl!,
+        receiverId: userIdToFollow,
+        type: 'follow',
+        text: 'started following you',
       );
       await getUserData();
       emit(HomeFollowUserSuccessState());
@@ -454,7 +504,6 @@ class HomeCubit extends Cubit<HomeStates> {
 
   void logout(BuildContext context) {
     FirebaseAuth.instance.signOut().then((value) {
-      OneSignal.logout();
       if (context.mounted) {
         context.pushReplacement<Object>(Routes.login);
       }
@@ -592,5 +641,30 @@ class HomeCubit extends Cubit<HomeStates> {
     homeCubit.editPostImage = null;
     homeCubit.editPostImageUrl = null;
     emit(HomeRemoveEditPostImageState());
+  }
+
+  List<NotificationModel> notifications = [];
+  int unreadNotificationsCount = 0;
+
+  void getNotifications() {
+    if (userModel == null) return;
+    emit(HomeGetNotificationsLoadingState());
+    try {
+      notificationRepo.getUserNotifications(userModel!.uid!).listen((event) {
+        notifications = event;
+        unreadNotificationsCount = notifications.where((n) => !n.isRead).length;
+        emit(HomeGetNotificationsSuccessState(event));
+      });
+    } catch (e) {
+      emit(HomeGetNotificationsErrorState(e.toString()));
+    }
+  }
+
+  Future<void> markNotificationAsRead(String notificationId) async {
+    try {
+      await notificationRepo.markNotificationAsRead(notificationId);
+    } catch (e) {
+      debugPrint("Error marking notification as read: $e");
+    }
   }
 }

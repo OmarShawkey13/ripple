@@ -4,6 +4,7 @@ import 'package:ripple/features/home/presentation/widgets/comments_screen.dart';
 import 'package:ripple/features/home/presentation/screen/home_screen.dart';
 import 'package:ripple/features/home/presentation/widgets/add_post_screen.dart';
 import 'package:ripple/features/home/presentation/widgets/edit_post_screen.dart';
+import 'package:ripple/features/home/presentation/widgets/notifications_screen.dart';
 import 'package:ripple/features/login/presentation/screen/login_screen.dart';
 import 'package:ripple/features/on_boarding/presentation/screen/on_boarding_screen.dart';
 import 'package:ripple/features/profile/presentation/screen/profile_screen.dart';
@@ -23,6 +24,7 @@ class Routes {
   static const String addPost = "/add_post";
   static const String editPost = "/edit_post";
   static const String comments = "/comments";
+  static const String notifications = "/notifications";
 
   static Map<String, WidgetBuilder> get routes => {
     entry: (context) => const EntryScreen(),
@@ -36,5 +38,6 @@ class Routes {
     addPost: (context) => const AddPostScreen(),
     editPost: (context) => const EditPostScreen(),
     comments: (context) => const CommentsScreen(),
+    notifications: (context) => const NotificationsScreen(),
   };
 }

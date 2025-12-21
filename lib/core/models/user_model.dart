@@ -10,6 +10,7 @@ class UserModel {
   final DateTime? createdAt;
   final List<String> followers;
   final List<String> following;
+  final String? fcmToken; // تمت الإضافة
 
   const UserModel({
     required this.uid,
@@ -21,6 +22,7 @@ class UserModel {
     this.createdAt,
     this.followers = const [],
     this.following = const [],
+    this.fcmToken, // تمت الإضافة
   });
 
   /// ------------ Firestore → Model ------------
@@ -42,6 +44,7 @@ class UserModel {
       createdAt: parseDate(map["createdAt"]),
       followers: List<String>.from(map['followers'] ?? []),
       following: List<String>.from(map['following'] ?? []),
+      fcmToken: map['fcmToken'], // تمت الإضافة
     );
   }
 
@@ -57,6 +60,7 @@ class UserModel {
       'createdAt': createdAt?.toIso8601String(),
       'followers': followers,
       'following': following,
+      'fcmToken': fcmToken, // تمت الإضافة
     };
   }
 
@@ -70,6 +74,7 @@ class UserModel {
     DateTime? createdAt,
     List<String>? followers,
     List<String>? following,
+    String? fcmToken, // تمت الإضافة
   }) {
     return UserModel(
       uid: uid,
@@ -81,6 +86,7 @@ class UserModel {
       createdAt: createdAt ?? this.createdAt,
       followers: followers ?? this.followers,
       following: following ?? this.following,
+      fcmToken: fcmToken ?? this.fcmToken, // تمت الإضافة
     );
   }
 }

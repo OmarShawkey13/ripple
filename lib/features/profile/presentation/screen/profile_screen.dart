@@ -4,6 +4,7 @@ import 'package:ripple/core/models/user_model.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/utils/cubit/home_cubit.dart';
 import 'package:ripple/core/utils/cubit/home_state.dart';
+import 'package:ripple/core/utils/extensions/context_extension.dart';
 import 'package:ripple/features/profile/presentation/widgets/profile_back_button.dart';
 import 'package:ripple/features/profile/presentation/widgets/profile_cover.dart';
 import 'package:ripple/features/profile/presentation/widgets/profile_header.dart';
@@ -24,7 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final userId = ModalRoute.of(context)?.settings.arguments as String?;
+    final userId = context.getArg<String?>();
 
     if (userId == null || userId == homeCubit.userModel?.uid) {
       viewedUser = homeCubit.userModel;
