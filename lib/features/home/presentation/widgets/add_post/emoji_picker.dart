@@ -16,18 +16,59 @@ class EmojiPicker extends StatefulWidget {
   State<EmojiPicker> createState() => _EmojiPickerState();
 }
 
+class _EmojiItem {
+  final String base;
+  final List<String> variants;
+
+  _EmojiItem(this.base, this.variants);
+}
+
 class _EmojiPickerState extends State<EmojiPicker> {
   late PageController _pageController;
   int selectedCategory = 0;
 
-  final List<EmojiCategory> availableCategories = emojiCategories
-      .where((c) => c.emojis != null)
-      .toList();
+  // Key: Base Emoji, Value: Selected Variant
+  final Map<String, String> _preferredSkinTones = {};
+
+  late List<List<_EmojiItem>> _processedCategories;
+  late List<EmojiCategory> _availableCategories;
+
+  // Unicode skin tone modifiers
+  static const List<int> _modifiers = [
+    0x1F3FB,
+    0x1F3FC,
+    0x1F3FD,
+    0x1F3FE,
+    0x1F3FF,
+  ];
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: selectedCategory);
+    _availableCategories = emojiCategories
+        .where((c) => c.emojis != null)
+        .toList();
+    _processCategories();
+  }
+
+  void _processCategories() {
+    _processedCategories = _availableCategories.map((category) {
+      final rawEmojis = category.emojis!;
+      final Map<String, List<String>> groups = {};
+      final List<String> order = [];
+
+      for (final emoji in rawEmojis) {
+        final base = _stripSkinTone(emoji);
+        if (!groups.containsKey(base)) {
+          groups[base] = [];
+          order.add(base);
+        }
+        groups[base]!.add(emoji);
+      }
+
+      return order.map((base) => _EmojiItem(base, groups[base]!)).toList();
+    }).toList();
   }
 
   @override
@@ -45,6 +86,77 @@ class _EmojiPickerState extends State<EmojiPicker> {
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOut,
     );
+  }
+
+  String _stripSkinTone(String emoji) {
+    final runes = emoji.runes.where((rune) => !_modifiers.contains(rune));
+    return String.fromCharCodes(runes);
+  }
+
+  void _onEmojiTap(String baseEmoji) {
+    final current = _preferredSkinTones[baseEmoji] ?? baseEmoji;
+    widget.onEmojiSelected(current);
+  }
+
+  void _onEmojiLongPress(
+    LongPressStartDetails details,
+    String baseEmoji,
+    List<String> variants,
+  ) async {
+    if (variants.length <= 1) return; // No variants to show
+
+    // Show menu logic
+    final selected = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        details.globalPosition.dx,
+        details.globalPosition.dy,
+        details.globalPosition.dx,
+        details.globalPosition.dy,
+      ),
+      color: ColorsManager.cardColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      items: [
+        PopupMenuItem(
+          enabled: false,
+          padding: EdgeInsets.zero,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 300),
+            child: Container(
+              height: 50,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: variants.map((variant) {
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pop(variant);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: EmojiText(
+                          text: variant,
+                          style: const TextStyle(fontSize: 28),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+
+    if (selected != null) {
+      setState(() {
+        _preferredSkinTones[baseEmoji] = selected;
+      });
+      widget.onEmojiSelected(selected);
+    }
   }
 
   @override
@@ -68,21 +180,22 @@ class _EmojiPickerState extends State<EmojiPicker> {
       ),
       child: Column(
         children: [
-          // CATEGORY BAR
+          // HEADER: Categories
           SizedBox(
             height: 54,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: availableCategories.length,
+              itemCount: _availableCategories.length,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               itemBuilder: (_, i) {
                 final isActive = i == selectedCategory;
                 return GestureDetector(
                   onTap: () => _onCategoryTapped(i),
                   child: Container(
-                    width: 48,
+                    width: 42,
                     margin: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 6,
+                      horizontal: 2,
+                      vertical: 8,
                     ),
                     decoration: BoxDecoration(
                       color: isActive
@@ -92,9 +205,9 @@ class _EmojiPickerState extends State<EmojiPicker> {
                     ),
                     child: Center(
                       child: EmojiText(
-                        text: availableCategories[i].icon,
+                        text: _availableCategories[i].icon,
                         style: TextStylesManager.regular24.copyWith(
-                          fontSize: 26,
+                          fontSize: 22,
                           height: 1,
                         ),
                       ),
@@ -110,17 +223,14 @@ class _EmojiPickerState extends State<EmojiPicker> {
           Expanded(
             child: PageView.builder(
               controller: _pageController,
-              itemCount: availableCategories.length,
+              itemCount: _processedCategories.length,
               onPageChanged: (index) {
                 setState(() {
                   selectedCategory = index;
                 });
               },
               itemBuilder: (context, index) {
-                final category = availableCategories[index];
-                return _buildEmojiGrid(
-                  category.emojis!,
-                );
+                return _buildEmojiGrid(_processedCategories[index]);
               },
             ),
           ),
@@ -129,21 +239,26 @@ class _EmojiPickerState extends State<EmojiPicker> {
     );
   }
 
-  Widget _buildEmojiGrid(List<String> emojis) {
+  Widget _buildEmojiGrid(List<_EmojiItem> emojiItems) {
     return GridView.builder(
       padding: const EdgeInsets.all(12),
-      itemCount: emojis.length,
+      itemCount: emojiItems.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 8,
         mainAxisSpacing: 8,
         crossAxisSpacing: 8,
       ),
       itemBuilder: (_, i) {
+        final item = emojiItems[i];
+        final displayEmoji = _preferredSkinTones[item.base] ?? item.base;
+
         return GestureDetector(
-          onTap: () => widget.onEmojiSelected(emojis[i]),
+          onTap: () => _onEmojiTap(item.base),
+          onLongPressStart: (details) =>
+              _onEmojiLongPress(details, item.base, item.variants),
           child: Center(
             child: EmojiText(
-              text: emojis[i],
+              text: displayEmoji,
               style: const TextStyle(fontSize: 28),
             ),
           ),
