@@ -23,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     homeCubit.getUserData().then((value) {
       homeCubit.getPosts();
-      homeCubit.getNotifications(); // Fetch notifications on start
+      homeCubit.getNotifications();
     });
   }
 
@@ -86,15 +86,15 @@ class _HomeScreenState extends State<HomeScreen> {
           drawer: const HomeDrawer(),
           body: ConditionalBuilder(
             condition: state is HomeGetPostsLoadingState,
-            builder: (context) => ListView.builder(
+            builder: (context) => const Center(
+              child: CircularProgressIndicator(),
+            ),
+            fallback: (context) => ListView.builder(
               physics: const BouncingScrollPhysics(),
               itemCount: homeCubit.posts.length,
               itemBuilder: (context, index) => PostCard(
                 post: homeCubit.posts[index],
               ),
-            ),
-            fallback: (context) => const Center(
-              child: CircularProgressIndicator(),
             ),
           ),
           floatingActionButton: FloatingActionButton(

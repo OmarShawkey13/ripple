@@ -6,9 +6,10 @@ class NotificationModel {
   final String senderName;
   final String senderProfilePic;
   final String receiverId;
-  final String type; // 'like', 'comment', 'follow'
+  final String type; // 'like', 'comment', 'follow', 'login_alert'
   final String? postId;
   final String? text; // For comments or logic display
+  final Map<String, dynamic>? deviceInfo; // For login alerts
   final Timestamp timestamp;
   final bool isRead;
 
@@ -21,6 +22,7 @@ class NotificationModel {
     required this.type,
     this.postId,
     this.text,
+    this.deviceInfo,
     required this.timestamp,
     this.isRead = false,
   });
@@ -35,6 +37,7 @@ class NotificationModel {
       'type': type,
       'postId': postId,
       'text': text,
+      'deviceInfo': deviceInfo,
       'timestamp': timestamp,
       'isRead': isRead,
     };
@@ -50,6 +53,7 @@ class NotificationModel {
       type: map['type'] ?? '',
       postId: map['postId'],
       text: map['text'],
+      deviceInfo: map['deviceInfo'] as Map<String, dynamic>?,
       timestamp: map['timestamp'] ?? Timestamp.now(),
       isRead: map['isRead'] ?? false,
     );
@@ -64,6 +68,7 @@ class NotificationModel {
     String? type,
     String? postId,
     String? text,
+    Map<String, dynamic>? deviceInfo,
     Timestamp? timestamp,
     bool? isRead,
   }) {
@@ -76,6 +81,7 @@ class NotificationModel {
       type: type ?? this.type,
       postId: postId ?? this.postId,
       text: text ?? this.text,
+      deviceInfo: deviceInfo ?? this.deviceInfo,
       timestamp: timestamp ?? this.timestamp,
       isRead: isRead ?? this.isRead,
     );

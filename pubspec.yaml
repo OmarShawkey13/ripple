@@ -51,6 +51,7 @@ dependencies:
   uuid: ^4.5.2
   googleapis_auth: ^2.0.0
   flutter_local_notifications: ^19.5.0
+  device_info_plus: ^12.3.0
 
 dev_dependencies:
   flutter_test:

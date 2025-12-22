@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -99,6 +101,7 @@ class HomeCubit extends Cubit<HomeStates> {
   final TextEditingController loginEmailController = TextEditingController();
   final TextEditingController loginPasswordController = TextEditingController();
   final UserRepository userRepo = UserRepository();
+  StreamSubscription? _userSubscription;
 
   Future<void> login() async {
     emit(HomeLoginLoadingState());
@@ -106,12 +109,65 @@ class HomeCubit extends Cubit<HomeStates> {
     final password = loginPasswordController.text.trim();
     try {
       final user = await _signInUser(email, password);
+      // NEW: Update FCM Token on Login
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      await userRepo.updateUserField(user.uid, {'fcmToken': fcmToken});
+      
+      // NEW: Send Login Alert Notification
+      await _sendLoginAlert(user);
+
+      listenToUserData(); // Start listening to user data changes
+
       final refreshedUser = await _reloadUser(user);
       emit(HomeLoginSuccessState(refreshedUser));
     } on FirebaseAuthException catch (e) {
       emit(HomeLoginErrorState(_mapAuthError(e)));
     } catch (e) {
       emit(HomeLoginErrorState("Something went wrong. Please try again."));
+    }
+  }
+  
+  Future<void> _sendLoginAlert(User user) async {
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      Map<String, dynamic> deviceData = {};
+      
+      if (Platform.isAndroid) {
+        final androidInfo = await deviceInfo.androidInfo;
+        deviceData = {
+          'brand': androidInfo.brand,
+          'model': androidInfo.model,
+          'device': androidInfo.device,
+          'version': androidInfo.version.release,
+          'platform': 'Android',
+        };
+      } else if (Platform.isIOS) {
+        final iosInfo = await deviceInfo.iosInfo;
+        deviceData = {
+          'name': iosInfo.name,
+          'model': iosInfo.model,
+          'systemName': iosInfo.systemName,
+          'systemVersion': iosInfo.systemVersion,
+          'platform': 'iOS',
+        };
+      }
+      
+      // Get current user data to ensure we have name/photo (might be null if just signed in, so we fetch)
+      final userData = await userRepo.getUser(user.uid);
+      if (userData == null) return;
+
+      await notificationRepo.sendNotification(
+        senderId: user.uid, // System or self
+        senderName: "Security Alert", // Or App Name
+        senderProfilePic: "", // Optional: App Logo
+        receiverId: user.uid,
+        type: 'login_alert',
+        text: 'New login detected from ${deviceData['model'] ?? 'Unknown Device'}',
+        deviceInfo: deviceData,
+      );
+      
+    } catch (e) {
+      debugPrint("Error sending login alert: $e");
     }
   }
 
@@ -251,6 +307,32 @@ class HomeCubit extends Cubit<HomeStates> {
       jsonDecode(json),
       FirebaseAuth.instance.currentUser!.uid,
     );
+  }
+
+  void listenToUserData() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    _userSubscription?.cancel(); // Cancel any existing subscription
+
+    _userSubscription = userRepo.getUserStream(uid).listen((user) async {
+      if (user == null) return; // Should not happen if user is logged in
+
+      final currentToken = await FirebaseMessaging.instance.getToken();
+
+      if (user.fcmToken != currentToken) {
+        // Another device has logged in, log this one out
+        logout(navigatorKey.currentContext!); 
+        return;
+      } 
+
+      userModel = user;
+      await cacheUser(user);
+      emit(HomeGetUserSuccessState());
+    }, onError: (dynamic error) {
+      debugPrint("Error in user stream: $error");
+      emit(HomeGetUserErrorState(error.toString()));
+    });
   }
 
   Future<void> getUserData() async {
@@ -503,6 +585,7 @@ class HomeCubit extends Cubit<HomeStates> {
   }
 
   void logout(BuildContext context) {
+    _userSubscription?.cancel(); // Cancel subscription before logging out
     FirebaseAuth.instance.signOut().then((value) {
       if (context.mounted) {
         context.pushReplacement<Object>(Routes.login);

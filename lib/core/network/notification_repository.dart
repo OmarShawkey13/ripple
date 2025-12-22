@@ -15,6 +15,7 @@ class NotificationRepository {
     required String type,
     String? postId,
     String? text,
+    Map<String, dynamic>? deviceInfo,
   }) async {
     final notificationRef = _firestore.collection('notifications').doc();
     final notification = NotificationModel(
@@ -26,6 +27,7 @@ class NotificationRepository {
       type: type,
       postId: postId,
       text: text,
+      deviceInfo: deviceInfo,
       timestamp: Timestamp.now(),
     );
 

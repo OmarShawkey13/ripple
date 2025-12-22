@@ -12,6 +12,14 @@ class NotificationContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (notification.type == 'login_alert') {
+      return _buildLoginAlertContent();
+    }
+
+    return _buildDefaultContent();
+  }
+
+  Widget _buildDefaultContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -31,6 +39,43 @@ class NotificationContent extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+        verticalSpace4,
+        Text(
+          DateFormat.yMMMd()
+              .add_jm()
+              .format(notification.timestamp.toDate()),
+          style: TextStylesManager.regular12.copyWith(
+            color: ColorsManager.textSecondaryColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoginAlertContent() {
+    final deviceInfo = notification.deviceInfo;
+    String deviceText = 'New login from an unknown device.';
+
+    if (deviceInfo != null) {
+      final platform = deviceInfo['platform'] ?? '';
+      final model = deviceInfo['model'] ?? '';
+      deviceText = 'New login on $model ($platform)';
+    } 
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          notification.senderName, // "Security Alert"
+          style: TextStylesManager.bold14.copyWith(color: ColorsManager.error),
+        ),
+        verticalSpace4,
+        Text(
+          deviceText,
+          style: TextStylesManager.regular14.copyWith(
+            color: ColorsManager.textColor,
           ),
         ),
         verticalSpace4,

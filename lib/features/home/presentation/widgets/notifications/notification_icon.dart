@@ -20,6 +20,11 @@ class NotificationIcon extends StatelessWidget {
           Icons.person_add,
           color: ColorsManager.primary,
         );
+      case 'login_alert':
+        return const Icon(
+          Icons.security,
+          color: ColorsManager.error,
+        );
       default:
         return const SizedBox.shrink();
     }

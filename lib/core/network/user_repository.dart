@@ -6,24 +6,41 @@ class UserRepository {
     'users',
   );
 
-  /// -----------------------------
+  /// ----------------------------
+  /// GET USER STREAM (for real-time updates)
+  /// ----------------------------
+  Stream<UserModel?> getUserStream(String uid) {
+    return users.doc(uid).snapshots().map((doc) {
+      if (!doc.exists) return null;
+      return UserModel.fromMap(doc.data() as Map<String, dynamic>, uid);
+    });
+  }
+
+  /// ----------------------------
   /// CREATE USER DOCUMENT
-  /// -----------------------------
+  /// ----------------------------
   Future<void> createUser(UserModel user) async {
     await users.doc(user.uid).set(user.toMap());
   }
 
-  /// -----------------------------
+  /// ----------------------------
   /// UPDATE USER DATA
   /// (name, bio, photo, username, token…)
-  /// -----------------------------
+  /// ----------------------------
   Future<void> updateUser(UserModel user) async {
     await users.doc(user.uid).update(user.toMap());
   }
 
-  /// -----------------------------
+  /// ----------------------------
+  /// UPDATE a single field
+  /// ----------------------------
+  Future<void> updateUserField(String uid, Map<String, Object?> data) async {
+    await users.doc(uid).update(data);
+  }
+
+  /// ----------------------------
   /// GET USER DATA
-  /// -----------------------------
+  /// ----------------------------
   Future<UserModel?> getUser(String uid) async {
     final doc = await users.doc(uid).get();
     if (!doc.exists) return null;
@@ -51,17 +68,17 @@ class UserRepository {
     });
   }
 
-  /// -----------------------------
+  /// ----------------------------
   /// CHECK IF USER EXISTS
-  /// -----------------------------
+  /// ----------------------------
   Future<bool> userExists(String uid) async {
     final doc = await users.doc(uid).get();
     return doc.exists;
   }
 
-  /// -----------------------------
+  /// ----------------------------
   /// CHECK IF USERNAME EXISTS
-  /// -----------------------------
+  /// ----------------------------
   Future<bool> usernameExists(String username) async {
     final result = await users
         .where('username', isEqualTo: username.toLowerCase())
@@ -71,10 +88,10 @@ class UserRepository {
     return result.docs.isNotEmpty;
   }
 
-  /// -----------------------------
+  /// ----------------------------
   /// DELETE USER DATA
   /// (لو حبيت تعمل حذف كامل)
-  /// -----------------------------
+  /// ----------------------------
   Future<void> deleteUser(String uid) async {
     await users.doc(uid).delete();
   }

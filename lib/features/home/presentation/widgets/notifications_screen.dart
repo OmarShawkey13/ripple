@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
 import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/extensions/context_extension.dart';
 import 'package:ripple/features/home/presentation/widgets/notifications/notifications_list.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -21,6 +22,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          onPressed: () => context.pop,
+          icon: const Icon(Icons.arrow_back_ios_new),
+        ),
         title: Text(appTranslation().get('notifications')),
         centerTitle: true,
       ),
@@ -28,4 +33,3 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 }
-
