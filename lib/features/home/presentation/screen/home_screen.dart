@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
+import 'package:ripple/core/utils/constants/primary/conditional_builder.dart';
 import 'package:ripple/core/utils/constants/routes.dart';
 import 'package:ripple/core/utils/cubit/home_cubit.dart';
 import 'package:ripple/core/utils/cubit/home_state.dart';
@@ -83,15 +84,19 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           drawer: const HomeDrawer(),
-          body: state is HomeGetPostsLoadingState
-              ? const Center(child: CircularProgressIndicator())
-              : ListView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: homeCubit.posts.length,
-                  itemBuilder: (context, index) => PostCard(
-                    post: homeCubit.posts[index],
-                  ),
-                ),
+          body: ConditionalBuilder(
+            condition: state is HomeGetPostsLoadingState,
+            builder: (context) => ListView.builder(
+              physics: const BouncingScrollPhysics(),
+              itemCount: homeCubit.posts.length,
+              itemBuilder: (context, index) => PostCard(
+                post: homeCubit.posts[index],
+              ),
+            ),
+            fallback: (context) => const Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
           floatingActionButton: FloatingActionButton(
             onPressed: () {
               context.push<Object>(Routes.addPost);

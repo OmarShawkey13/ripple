@@ -123,27 +123,23 @@ class _EmojiPickerState extends State<EmojiPicker> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 300),
             child: Container(
-              height: 50,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: variants.map((variant) {
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).pop(variant);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                        child: EmojiText(
-                          text: variant,
-                          style: const TextStyle(fontSize: 28),
-                        ),
+              height: 56,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: variants.map((variant) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () => Navigator.of(context).pop(variant),
+                      child: EmojiText(
+                        text: variant,
+                        style: const TextStyle(fontSize: 30),
                       ),
-                    );
-                  }).toList(),
-                ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
           ),
@@ -191,7 +187,8 @@ class _EmojiPickerState extends State<EmojiPicker> {
                 final isActive = i == selectedCategory;
                 return GestureDetector(
                   onTap: () => _onCategoryTapped(i),
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
                     width: 42,
                     margin: const EdgeInsets.symmetric(
                       horizontal: 2,
@@ -203,6 +200,7 @@ class _EmojiPickerState extends State<EmojiPicker> {
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                     ),
+
                     child: Center(
                       child: EmojiText(
                         text: _availableCategories[i].icon,
@@ -241,25 +239,31 @@ class _EmojiPickerState extends State<EmojiPicker> {
 
   Widget _buildEmojiGrid(List<_EmojiItem> emojiItems) {
     return GridView.builder(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(12, 16, 12, 24),
+      physics: const BouncingScrollPhysics(),
       itemCount: emojiItems.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 8,
-        mainAxisSpacing: 8,
+        mainAxisSpacing: 10,
         crossAxisSpacing: 8,
       ),
       itemBuilder: (_, i) {
         final item = emojiItems[i];
         final displayEmoji = _preferredSkinTones[item.base] ?? item.base;
-
-        return GestureDetector(
-          onTap: () => _onEmojiTap(item.base),
-          onLongPressStart: (details) =>
-              _onEmojiLongPress(details, item.base, item.variants),
-          child: Center(
-            child: EmojiText(
-              text: displayEmoji,
-              style: const TextStyle(fontSize: 28),
+        return Material(
+          color: Colors.transparent,
+          child: GestureDetector(
+            onLongPressStart: (details) =>
+                _onEmojiLongPress(details, item.base, item.variants),
+            child: InkResponse(
+              radius: 28,
+              onTap: () => _onEmojiTap(item.base),
+              child: Center(
+                child: EmojiText(
+                  text: displayEmoji,
+                  style: const TextStyle(fontSize: 28),
+                ),
+              ),
             ),
           ),
         );

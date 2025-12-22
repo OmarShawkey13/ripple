@@ -3,11 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/theme/text_styles.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
+import 'package:ripple/core/utils/constants/primary/emoji_picker_container.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
 import 'package:ripple/core/utils/cubit/home_cubit.dart';
 import 'package:ripple/core/utils/cubit/home_state.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
-import 'package:ripple/features/home/presentation/widgets/add_post/emoji_picker.dart';
 
 class EditPostScreen extends StatefulWidget {
   const EditPostScreen({super.key});
@@ -193,24 +193,9 @@ class _EditPostScreenState extends State<EditPostScreen> {
                   ],
                 ),
               ),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOut,
-                height: isEmojiVisible ? 320 : 0,
-                child: isEmojiVisible
-                    ? EmojiPicker(
-                        onEmojiSelected: (emoji) {
-                          homeCubit.editPostController.text += emoji;
-                          homeCubit
-                              .editPostController
-                              .selection = TextSelection.fromPosition(
-                            TextPosition(
-                              offset: homeCubit.editPostController.text.length,
-                            ),
-                          );
-                        },
-                      )
-                    : const SizedBox.shrink(),
+              EmojiPickerContainer(
+                isVisible: isEmojiVisible,
+                controller: homeCubit.editPostController,
               ),
             ],
           ),

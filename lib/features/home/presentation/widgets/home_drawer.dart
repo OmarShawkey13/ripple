@@ -35,7 +35,6 @@ class HomeDrawer extends StatelessWidget {
                         )
                       : null,
                 ),
-
                 child: Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
