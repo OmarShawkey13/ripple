@@ -168,7 +168,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
                 ),
                 EmojiPickerContainer(
                   isVisible: homeCubit.isEmojiVisible,
-                  controller: homeCubit.postTextController,
+                  controller: homeCubit.editPostController,
                 ),
               ],
             ),
