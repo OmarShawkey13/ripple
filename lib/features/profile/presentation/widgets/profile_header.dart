@@ -5,10 +5,12 @@ import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/theme/emoji_text.dart';
 import 'package:ripple/core/theme/text_styles.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
+import 'package:ripple/core/utils/constants/primary/conditional_builder.dart';
 import 'package:ripple/core/utils/constants/primary/image_preview_page.dart';
+import 'package:ripple/core/utils/constants/primary/primary_button.dart';
 import 'package:ripple/core/utils/constants/routes.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
 
 class ProfileHeader extends StatelessWidget {
@@ -59,9 +61,11 @@ class ProfileHeader extends StatelessWidget {
               backgroundImage: user.photoUrl!.isNotEmpty
                   ? CachedNetworkImageProvider(user.photoUrl!)
                   : null,
-              child: user.photoUrl!.isEmpty
-                  ? const Icon(Icons.person, size: 48)
-                  : null,
+              child: ConditionalBuilder(
+                loadingState: user.photoUrl!.isEmpty,
+                successBuilder: (context) => const SizedBox.shrink(),
+                loadingBuilder: (context) => const Icon(Icons.person, size: 48),
+              ),
             ),
           ),
         ),
@@ -82,8 +86,26 @@ class ProfileHeader extends StatelessWidget {
           ),
         ),
         verticalSpace12,
-        if (isCurrentUser)
-          OutlinedButton(
+        ConditionalBuilder(
+          loadingState: false,
+          emptyState: !isCurrentUser,
+          emptyBuilder: (context) => SizedBox(
+            width: 150,
+            child: PrimaryButton(
+              onPressed: () {
+                if (isFollowing) {
+                  homeCubit.unfollowUser(user.uid!);
+                } else {
+                  homeCubit.followUser(user.uid!);
+                }
+              },
+              backgroundColor: isFollowing
+                  ? Colors.grey
+                  : ColorsManager.primary,
+              text: buttonText,
+            ),
+          ),
+          successBuilder: (context) => OutlinedButton(
             onPressed: () {
               context.push<Object>(Routes.editProfile);
             },
@@ -94,23 +116,8 @@ class ProfileHeader extends StatelessWidget {
               ),
             ),
             child: Text(appTranslation().get('edit_profile')),
-          )
-        else
-          ElevatedButton(
-            onPressed: () {
-              if (isFollowing) {
-                homeCubit.unfollowUser(user.uid!);
-              } else {
-                homeCubit.followUser(user.uid!);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isFollowing
-                  ? Colors.grey
-                  : ColorsManager.primary,
-            ),
-            child: Text(buttonText),
           ),
+        ),
         verticalSpace12,
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,

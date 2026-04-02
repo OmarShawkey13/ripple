@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 import 'package:ripple/features/profile/presentation/widgets/edit_profile/edit_profile_circle_icon_button.dart';
 
 class EditProfileSaveButton extends StatelessWidget {

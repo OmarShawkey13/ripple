@@ -1,5 +1,5 @@
 import 'package:ripple/core/utils/constants/translations.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/theme/theme_cubit.dart';
 
 TranslationModel appTranslation() =>
-    homeCubit.translationModel ?? TranslationModel.fromJson({});
+    themeCubit.translationModel ?? TranslationModel.fromJson({});

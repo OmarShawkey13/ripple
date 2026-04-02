@@ -55,5 +55,11 @@
   "notifications": "Notifications",
   "no_notifications": "No notifications yet",
   "delete": "Delete",
-  "copied": "Copied to clipboard"
+  "copied": "Copied to clipboard",
+  "about_ripple": "About Ripple",
+  "version": "Version",
+  "our_mission": "Our Mission",
+  "mission_content": "Ripple is a social platform aiming to connect people seamlessly and securely, focusing on a clean and simple user experience.",
+  "developer": "Developer",
+  "made_with_love": "Made with ❤️ using Flutter"
 }

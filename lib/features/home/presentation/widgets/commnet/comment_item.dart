@@ -6,7 +6,7 @@ import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/theme/emoji_text.dart';
 import 'package:ripple/core/theme/text_styles.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 import 'package:ripple/features/home/presentation/widgets/commnet/comment_context_menu.dart';
 
 class CommentItem extends StatelessWidget {
@@ -59,9 +59,9 @@ class CommentItem extends StatelessWidget {
                   ),
                   verticalSpace4,
                   Text(
-                    DateFormat.yMMMd()
-                        .add_jm()
-                        .format(comment.timestamp.toDate()),
+                    DateFormat.yMMMd().add_jm().format(
+                      comment.timestamp.toDate(),
+                    ),
                     style: TextStylesManager.regular12.copyWith(
                       color: ColorsManager.textSecondaryColor,
                     ),

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
-import 'package:ripple/core/utils/cubit/home_state.dart';
+import 'package:ripple/core/utils/constants/primary/loading_indicator.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/home/home_state.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
 import 'package:ripple/features/profile/presentation/widgets/edit_profile/edit_profile_back_button.dart';
 import 'package:ripple/features/profile/presentation/widgets/edit_profile/edit_profile_cover.dart';
@@ -48,7 +49,7 @@ class EditProfileScreen extends StatelessWidget {
         if (state is HomeUpdateProfileLoadingState) {
           return const Scaffold(
             body: Center(
-              child: CircularProgressIndicator(),
+              child: LoadingIndicator(),
             ),
           );
         }

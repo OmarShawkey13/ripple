@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ripple/core/theme/colors.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 
 class PostImagePreview extends StatelessWidget {
   const PostImagePreview({super.key});

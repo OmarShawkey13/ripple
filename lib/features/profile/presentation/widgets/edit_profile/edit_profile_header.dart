@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 import 'package:ripple/features/profile/presentation/widgets/edit_profile/edit_profile_circle_icon_button.dart';
 
 class EditProfileHeader extends StatelessWidget {

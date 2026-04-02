@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ripple/features/home/presentation/widgets/add_post/emoji_picker.dart';
+import 'package:ripple/features/home/presentation/widgets/emoji_picker/emoji_picker.dart';
 
 class EmojiPickerContainer extends StatelessWidget {
   final bool isVisible;

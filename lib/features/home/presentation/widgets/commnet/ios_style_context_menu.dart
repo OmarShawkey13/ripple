@@ -200,9 +200,11 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
                       child: Container(
                         width: 280,
                         decoration: BoxDecoration(
-                          color: widget.isDark ?? false
-                              ? Colors.black.withValues(alpha: 0.9)
-                              : Colors.white.withValues(alpha: 0.7),
+                          color:
+                              widget.backgroundColor ??
+                              (widget.isDark ?? false
+                                  ? Colors.black.withValues(alpha: 0.9)
+                                  : Colors.white.withValues(alpha: 0.7)),
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(

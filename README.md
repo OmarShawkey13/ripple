@@ -1,23 +1,26 @@
 # Ripple 🌊
 
-Ripple is a modern **Flutter social application** built with a strong focus on **clean architecture**, **scalability**, and **production-ready patterns**. The project is designed to reflect real-world application structure rather than a tutorial-style implementation, making it suitable for long-term growth and maintenance.
+Ripple is a modern **Flutter social application** built with a strong focus on **clean architecture**, **scalability**, and **production-ready patterns**. The project is designed to reflect real-world application structure, making it suitable for long-term growth and maintenance.
 
-Ripple demonstrates how to build a social platform using Flutter, Firebase, and OneSignal while keeping the codebase modular, readable, and easy to evolve.
+Ripple demonstrates how to build a social platform using Flutter and Firebase while keeping the codebase modular, readable, and easy to evolve.
 
 ---
 
 ## ✨ What Makes Ripple Special
 
-* 🧠 **Clean & Scalable Architecture** inspired by Clean Architecture principles
-* 🔄 **Predictable state management** using BLoC
-* 🔔 **Real-time push notifications** using OneSignal
-* 🌍 **Multi-language support (Arabic & English)**
-* 🧩 **Modular feature-based structure**
-* 🚀 Built as a **real product**, not a demo
+* 🧠 **Clean & Scalable Architecture** inspired by Clean Architecture principles.
+* 🔄 **Predictable state management** using BLoC.
+* 🔔 **Real-time push notifications** using Firebase Cloud Messaging (FCM) via HTTP v1 API.
+* 🌍 **Multi-language support (Arabic & English)**.
+* 🧩 **Modular feature-based structure**.
+* 🚀 Built as a **real product**, not a demo.
 
 ---
 
 ## 🚀 Features
+
+* **Entry & Routing Management**
+  Intelligent routing that handles Onboarding flow and Firebase Auth state automatically.
 
 * **Onboarding**
   Smooth introduction experience for first-time users.
@@ -26,210 +29,111 @@ Ripple demonstrates how to build a social platform using Flutter, Firebase, and 
   Secure login and registration using Firebase Authentication.
 
 * **Profile Management**
-  View and edit user profiles, including profile and cover images.
+  View and edit user profiles, including profile and cover images with Cloudinary integration.
 
 * **Home Feed**
-  A dynamic feed displaying user-generated posts.
+  A dynamic feed displaying user-generated posts with real-time updates.
 
 * **Posts Interaction**
-  Like and comment on posts in real time.
+  Create, **Edit**, and Delete posts. Like and comment on posts in real time.
+
+* **Custom Emoji Support**
+  Enhanced user experience with a custom-built Emoji picker for posts and comments.
 
 * **Follow System**
-  Follow and unfollow users with instant updates.
+  Follow and unfollow users with instant UI updates.
+
+* **In-App Notifications**
+  A dedicated notification center to track likes, comments, and new followers.
 
 * **Settings**
-  Manage application preferences such as language and theme.
-
-* **Push Notifications**
-  Real-time notifications for:
-
-    * Likes ❤️
-    * Comments 💬
-    * Follows 👤
-      Powered by **OneSignal**.
+  Manage application preferences such as language and theme (Light/Dark).
 
 ---
 
 ## 🏗 Architecture Overview
 
-Ripple follows **Clean Architecture concepts** to enforce separation of concerns and improve maintainability.
+Ripple follows a **Layered Feature-based Architecture** to enforce separation of concerns.
 
 ### 🧱 Presentation Layer
-
 * **Location**: `lib/features/*/presentation/`
+* **Responsibility**: UI screens, widgets, and state management using **BLoC**.
 
-* **Responsibility**:
-
-    * UI screens and widgets
-    * User interaction handling
-    * State management
-
-* **State Management**:
-
-    * Uses **BLoC (flutter_bloc)** for predictable and testable state handling
-
----
-
-### 🧩 Core & Shared Layer
-
+### 🧩 Core Layer
 * **Location**: `lib/core/`
 * **Contains**:
-
-    * `di` → Dependency Injection using **get_it**
-    * `theme` → Colors, typography, and UI styles
-    * `utils` → Helpers, constants, extensions
-    * `models` → Shared data models
-    * `network` → Repositories & services (Firebase, OneSignal)
-
-> Note: The domain and data responsibilities are logically separated and implemented within the core and feature layers to keep the project pragmatic and flexible.
+    * `network` → Repositories & services (Firebase, FCM v1, Cloudinary).
+    * `models` → Data models (Post, User, Notification, Comment).
+    * `theme` → Dynamic UI styling and colors.
+    * `utils` → Helpers, constants, and global Cubits.
 
 ---
 
 ## 🔔 Push Notifications
 
-Ripple uses **OneSignal** for push notifications.
+Ripple uses **Firebase Cloud Messaging (FCM)** with a secure implementation of the **HTTP v1 API**.
 
 ### Supported Notifications
-
-* ❤️ Like notifications
-* 💬 Comment notifications
-* 👤 Follow notifications
+* ❤️ **Likes**: Triggered when someone likes your post.
+* 💬 **Comments**: Triggered when someone comments on your post.
+* 👤 **Follows**: Triggered when someone starts following you.
 
 ### Key Characteristics
-
-* Triggered from client-side events
-* Linked using `external_user_id`
-* Payload-based navigation handling
-* Language-aware notifications (Arabic / English)
-
----
-
-## 🌍 Localization
-
-* Supports **Arabic** and **English**
-* Language preference is stored per user
-* Notifications respect the selected app language
+* Uses **Google OAuth 2.0** (`googleapis_auth`) for secure server-side messaging.
+* Integrated with **Flutter Local Notifications** for foreground alerts.
+* Payload-based navigation (e.g., clicking a comment notification opens the post's comment section).
+* Multi-language support in notification content.
 
 ---
 
 ## 📦 Tech Stack & Dependencies
 
-### 🛠 Core
-
-* Flutter
-* Dart
-
 ### 🔄 State Management
-
-* bloc
-* flutter_bloc
+* `bloc` & `flutter_bloc`
 
 ### 🔐 Backend & Database
+* `firebase_core`, `firebase_auth`, `cloud_firestore`
 
-* firebase_core
-* firebase_auth
-* cloud_firestore
+### 🔔 Notifications & Auth
+* `firebase_messaging`
+* `flutter_local_notifications`
+* `googleapis_auth` (FCM v1 Secure Messaging)
 
-### 🔔 Notifications
-
-* onesignal_flutter
-
-### 🌐 Networking
-
-* http
-
-### 🖼 Media & UI
-
-* image_picker
-* cached_network_image
+### 🌐 Networking & Media
+* `http`
+* `image_picker`
+* `cached_network_image`
+* **Cloudinary** (Image Hosting)
 
 ### 💾 Local Storage
-
-* shared_preferences
-
-### 🌍 Localization
-
-* intl
-
-### ⚙ Tooling
-
-* get_it
-* flutter_launcher_icons
-* flutter_native_splash
+* `shared_preferences`
 
 ---
 
 ## 📸 Screenshots
 
-| Home Feed                        | Profile                             | Comments                             |
-|----------------------------------|-------------------------------------|--------------------------------------|
+| Home Feed | Profile | Notifications |
+| :--- | :--- | :--- |
 | ![](assets/screenshots/home.jpg) | ![](assets/screenshots/profile.jpg) | ![](assets/screenshots/comments.jpg) |
 
 ---
 
 ## 🏁 Getting Started
 
-### Prerequisites
-
-* Flutter SDK
-* Android Studio or VS Code
-* Firebase project configured
-* OneSignal account
-
----
-
 ### Installation
-
-1. Clone the repository
-
-   ```sh
-   git clone https://github.com/OmarShawkey13/ripple.git
-   ```
-
-2. Navigate to the project directory
-
-   ```sh
-   cd ripple
-   ```
-
-3. Install dependencies
-
-   ```sh
-   flutter pub get
-   ```
-
-4. Configure Firebase
-
-    * Add `google-services.json` for Android
-
-5. Configure OneSignal
-
-    * Add your OneSignal App ID
-    * Set up notification icons
-
-6. Run the app
-
-   ```sh
-   flutter run
-   ```
-
----
-
-## 📌 Notes
-
-* This project is actively evolving
-* Architecture decisions favor scalability over simplicity
-* Designed to be easily extended with backend services or cloud functions
+1. Clone the repository: `git clone https://github.com/OmarShawkey13/ripple.git`
+2. Install dependencies: `flutter pub get`
+3. Configure Firebase: Add `google-services.json` to the Android app directory.
+4. FCM Credentials: Place your Firebase Service Account JSON in `assets/firebase/` for notification support.
+5. Run the app: `flutter run`
 
 ---
 
 ## 🧑‍💻 Author
-
 **Omar Shawkey**
 Flutter Developer
 
 ---
 
 ## ⭐ Support
-
-If you like this project, consider giving it a ⭐ on GitHub — it helps a lot!
+If you like this project, consider giving it a ⭐ on GitHub!

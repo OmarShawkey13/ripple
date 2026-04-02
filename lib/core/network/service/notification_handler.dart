@@ -58,7 +58,7 @@ class NotificationHandler {
     );
 
     await _localNotifications.initialize(
-      initializationSettings,
+      settings: initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         log("Notification response: ${response.payload}");
       },
@@ -94,10 +94,10 @@ class NotificationHandler {
       log("Title: ${notification.title}, Body: ${notification.body}");
 
       await _localNotifications.show(
-        notification.hashCode,
-        notification.title,
-        notification.body,
-        const NotificationDetails(
+        id: notification.hashCode,
+        title: notification.title,
+        body: notification.body,
+        notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
             'high_importance_channel',
             'High Importance Notifications',

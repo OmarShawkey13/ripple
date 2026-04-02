@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/theme/theme_cubit.dart';
 
 class ColorsManager {
-  static bool get isDark => homeCubit.isDarkMode;
+  static bool get isDark => themeCubit.isDarkMode;
 
   // -------- PRIMARY COLORS (Ripple Identity) -------- //
   static const Color primary = Color(0xFF3C78FF); // Ripple Blue

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ripple/core/models/comment_model.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/theme/theme_cubit.dart';
 import 'package:ripple/features/home/data/model/context_menu.dart';
 import 'package:ripple/features/home/presentation/widgets/commnet/ios_style_context_menu.dart';
 
@@ -27,6 +28,7 @@ class CommentContextMenu extends StatelessWidget {
         showDialog<Object>(
           context: context,
           builder: (_) => IosStyleContextMenu(
+            isDark: themeCubit.isDarkMode,
             menuAlignment: Alignment.centerRight,
             actions: [
               ContextMenuAndroid(

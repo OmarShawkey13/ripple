@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ripple/core/models/user_model.dart';
 import 'package:ripple/core/theme/colors.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
-import 'package:ripple/core/utils/cubit/home_state.dart';
+import 'package:ripple/core/utils/constants/primary/conditional_builder.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/home/home_state.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
 import 'package:ripple/features/profile/presentation/widgets/profile_back_button.dart';
 import 'package:ripple/features/profile/presentation/widgets/profile_cover.dart';
@@ -67,39 +68,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context, state) {
         final posts = homeCubit.userPosts;
         final currentUser = homeCubit.userModel;
-        if (viewedUser == null || currentUser == null) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        return Scaffold(
-          backgroundColor: ColorsManager.backgroundColor,
-          body: SingleChildScrollView(
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                ProfileCover(
-                  height: coverHeight,
-                  imageUrl: viewedUser!.coverUrl,
-                ),
-                const ProfileBackButton(),
-                Padding(
-                  padding: const EdgeInsets.only(
-                    top: coverHeight - profileRadius,
+
+        return ConditionalBuilder(
+          loadingState: viewedUser == null || currentUser == null,
+          successBuilder: (context) => Scaffold(
+            backgroundColor: ColorsManager.backgroundColor,
+            body: SingleChildScrollView(
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  ProfileCover(
+                    height: coverHeight,
+                    imageUrl: viewedUser!.coverUrl,
                   ),
-                  child: Column(
-                    children: [
-                      ProfileHeader(
-                        user: viewedUser!,
-                        profileRadius: profileRadius,
-                        currentUser: currentUser,
-                        postCount: posts.length,
-                      ),
-                      ProfilePostsSection(posts: posts),
-                    ],
+                  const ProfileBackButton(),
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      top: coverHeight - profileRadius,
+                    ),
+                    child: Column(
+                      children: [
+                        ProfileHeader(
+                          user: viewedUser!,
+                          profileRadius: profileRadius,
+                          currentUser: currentUser!,
+                          postCount: posts.length,
+                        ),
+                        ProfilePostsSection(posts: posts),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );

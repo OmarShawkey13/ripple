@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ripple/features/about/presentation/screen/about_screen.dart';
 import 'package:ripple/features/entry/presentation/screen/entry_screen.dart';
 import 'package:ripple/features/home/presentation/widgets/comments_screen.dart';
 import 'package:ripple/features/home/presentation/screen/home_screen.dart';
@@ -10,7 +11,6 @@ import 'package:ripple/features/on_boarding/presentation/screen/on_boarding_scre
 import 'package:ripple/features/profile/presentation/screen/profile_screen.dart';
 import 'package:ripple/features/profile/presentation/widgets/edit_profile_screen.dart';
 import 'package:ripple/features/register/presentation/screen/register_screen.dart';
-import 'package:ripple/features/settings/presentation/screen/settings_screen.dart';
 
 class Routes {
   static const String entry = "/entry";
@@ -18,7 +18,7 @@ class Routes {
   static const String login = "/login";
   static const String register = "/register";
   static const String home = "/home";
-  static const String settings = "/settings";
+  static const String about = "/about";
   static const String profile = "/profile";
   static const String editProfile = "/edit_profile";
   static const String addPost = "/add_post";
@@ -32,7 +32,7 @@ class Routes {
     login: (context) => LoginScreen(),
     register: (context) => RegisterScreen(),
     home: (context) => const HomeScreen(),
-    settings: (context) => const SettingsScreen(),
+    about: (context) => const AboutScreen(),
     profile: (context) => const ProfileScreen(),
     editProfile: (context) => const EditProfileScreen(),
     addPost: (context) => const AddPostScreen(),

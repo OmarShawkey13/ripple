@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ripple/core/models/post_model.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
 import 'package:ripple/core/utils/constants/primary/emoji_picker_container.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
 import 'package:ripple/features/home/presentation/widgets/commnet/comment_input_bar.dart';
 import 'package:ripple/features/home/presentation/widgets/commnet/comment_list.dart';
@@ -55,4 +55,3 @@ class _CommentsScreenState extends State<CommentsScreen> {
     );
   }
 }
-

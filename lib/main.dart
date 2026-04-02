@@ -9,8 +9,10 @@ import 'package:ripple/core/network/service/notification_handler.dart';
 import 'package:ripple/core/theme/theme.dart';
 import 'package:ripple/core/utils/constants/my_bloc_observer.dart';
 import 'package:ripple/core/utils/constants/routes.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
-import 'package:ripple/core/utils/cubit/home_state.dart';
+import 'package:ripple/core/utils/cubit/auth/auth_cubit.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/theme/theme_cubit.dart';
+import 'package:ripple/core/utils/cubit/theme/theme_state.dart';
 import 'package:ripple/firebase_options.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -52,16 +54,26 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<HomeCubit>()
-        ..initializeLanguage(
-          isArabic: isArabic,
-          translations: translation,
-        )
-        ..changeTheme(
-          fromShared: isDark,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => sl<AuthCubit>(),
         ),
-      child: BlocBuilder<HomeCubit, HomeStates>(
+        BlocProvider(
+          create: (context) => sl<HomeCubit>(),
+        ),
+        BlocProvider(
+          create: (context) => sl<ThemeCubit>()
+            ..changeLanguage(
+              isArabic: isArabic,
+              translations: translation,
+            )
+            ..changeTheme(
+              fromShared: isDark,
+            ),
+        ),
+      ],
+      child: BlocBuilder<ThemeCubit, ThemeState>(
         builder: (context, state) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
@@ -70,12 +82,12 @@ class MyApp extends StatelessWidget {
             initialRoute: Routes.entry,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
-            themeMode: HomeCubit.get(context).isDarkMode
+            themeMode: ThemeCubit.get(context).isDarkMode
                 ? ThemeMode.dark
                 : ThemeMode.light,
             builder: (context, child) {
               return Directionality(
-                textDirection: HomeCubit.get(context).isArabicLang
+                textDirection: ThemeCubit.get(context).isArabicLang
                     ? TextDirection.rtl
                     : TextDirection.ltr,
                 child: child!,

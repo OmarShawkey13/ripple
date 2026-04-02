@@ -1,58 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:ripple/core/models/notification_model.dart';
 import 'package:ripple/core/models/post_model.dart';
 
 abstract class HomeStates {}
 
 class HomeInitialState extends HomeStates {}
-
-class HomeChangeThemeState extends HomeStates {}
-
-class HomeLanguageUpdatedState extends HomeStates {}
-
-class HomeLanguageLoadingState extends HomeStates {}
-
-class HomeLanguageLoadedState extends HomeStates {}
-
-class HomeLanguageErrorState extends HomeStates {
-  final String error;
-
-  HomeLanguageErrorState(this.error);
-}
-
-class HomeShowPasswordUpdatedState extends HomeStates {}
-
-//login
-class HomeLoginLoadingState extends HomeStates {}
-
-class HomeLoginSuccessState extends HomeStates {
-  final User? user;
-
-  HomeLoginSuccessState(this.user);
-}
-
-class HomeLoginErrorState extends HomeStates {
-  final String error;
-
-  HomeLoginErrorState(this.error);
-}
-
-//register
-class HomeProfileImagePickedState extends HomeStates {}
-
-class HomeRegisterLoadingState extends HomeStates {}
-
-class HomeRegisterSuccessState extends HomeStates {
-  final User? user;
-
-  HomeRegisterSuccessState(this.user);
-}
-
-class HomeRegisterErrorState extends HomeStates {
-  final String error;
-
-  HomeRegisterErrorState(this.error);
-}
 
 //getUserData
 class HomeGetUserSuccessState extends HomeStates {}
@@ -153,6 +104,8 @@ class HomeUpdateProfileErrorState extends HomeStates {
 }
 
 class HomeCoverImagePickedState extends HomeStates {}
+
+class HomeProfileImagePickedState extends HomeStates {}
 
 // Edit Post
 class HomeRemoveEditPostImageState extends HomeStates {}

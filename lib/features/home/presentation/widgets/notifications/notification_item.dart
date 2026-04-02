@@ -4,7 +4,7 @@ import 'package:ripple/core/models/notification_model.dart';
 import 'package:ripple/core/network/service/notification_service.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 import 'package:ripple/features/home/presentation/widgets/notifications/notification_content.dart';
 import 'package:ripple/features/home/presentation/widgets/notifications/notification_icon.dart';
 
@@ -43,8 +43,8 @@ class NotificationItem extends StatelessWidget {
               radius: 24,
               backgroundImage: notification.senderProfilePic.isNotEmpty
                   ? CachedNetworkImageProvider(
-                notification.senderProfilePic,
-              )
+                      notification.senderProfilePic,
+                    )
                   : null,
               child: notification.senderProfilePic.isEmpty
                   ? const Icon(Icons.person)

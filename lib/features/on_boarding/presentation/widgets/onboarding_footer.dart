@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/theme/text_styles.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
+import 'package:ripple/core/utils/constants/primary/primary_button.dart';
 
 class OnBoardingFooter extends StatelessWidget {
   final bool isLast;
@@ -36,18 +37,13 @@ class OnBoardingFooter extends StatelessWidget {
           ),
 
           // Button
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-            ),
+          PrimaryButton(
+            width: isLast ? 150 : 60,
+            height: 45,
             onPressed: isLast ? onStart : onNext,
+            text: isLast ? appTranslation().get("get_started") : '',
             child: isLast
-                ? Text(
-                    appTranslation().get("get_started"),
-                    style: TextStylesManager.medium14.copyWith(
-                      color: Colors.white,
-                    ),
-                  )
+                ? null
                 : const Icon(
                     Icons.arrow_forward_ios,
                     size: 18,

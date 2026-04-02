@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/theme/text_styles.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
 
 class AddPostAppBar extends StatelessWidget implements PreferredSizeWidget {

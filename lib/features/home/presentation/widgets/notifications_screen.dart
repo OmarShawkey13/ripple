@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
 import 'package:ripple/features/home/presentation/widgets/notifications/notifications_list.dart';
 

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:ripple/core/models/post_model.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
+import 'package:ripple/core/utils/constants/primary/primary_text_field.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 
 class CommentInputBar extends StatelessWidget {
   final bool isEmojiVisible;
@@ -38,15 +39,10 @@ class CommentInputBar extends StatelessWidget {
             },
           ),
           Expanded(
-            child: TextFormField(
+            child: PrimaryTextField(
               focusNode: focusNode,
               controller: homeCubit.commentController,
-              decoration: InputDecoration(
-                hintText: appTranslation().get('add_comment'),
-                border: const OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(12)),
-                ),
-              ),
+              hintText: appTranslation().get('add_comment'),
             ),
           ),
           horizontalSpace8,

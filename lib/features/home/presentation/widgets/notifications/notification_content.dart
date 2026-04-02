@@ -43,9 +43,7 @@ class NotificationContent extends StatelessWidget {
         ),
         verticalSpace4,
         Text(
-          DateFormat.yMMMd()
-              .add_jm()
-              .format(notification.timestamp.toDate()),
+          DateFormat.yMMMd().add_jm().format(notification.timestamp.toDate()),
           style: TextStylesManager.regular12.copyWith(
             color: ColorsManager.textSecondaryColor,
           ),
@@ -62,7 +60,7 @@ class NotificationContent extends StatelessWidget {
       final platform = deviceInfo['platform'] ?? '';
       final model = deviceInfo['model'] ?? '';
       deviceText = 'New login on $model ($platform)';
-    } 
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,9 +78,7 @@ class NotificationContent extends StatelessWidget {
         ),
         verticalSpace4,
         Text(
-          DateFormat.yMMMd()
-              .add_jm()
-              .format(notification.timestamp.toDate()),
+          DateFormat.yMMMd().add_jm().format(notification.timestamp.toDate()),
           style: TextStylesManager.regular12.copyWith(
             color: ColorsManager.textSecondaryColor,
           ),

@@ -2,23 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/theme/text_styles.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/theme/theme_cubit.dart';
 
 class HomeDrawerTile extends StatelessWidget {
   final String title;
   final IconData icon;
-  final GestureTapCallback onTap;
+  final VoidCallback? onTap;
+  final Widget? trailing;
 
   const HomeDrawerTile({
     super.key,
     required this.title,
     required this.icon,
-    required this.onTap,
+    this.onTap,
+    this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = homeCubit.isDarkMode;
+    final isDark = themeCubit.isDarkMode;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -53,11 +55,12 @@ class HomeDrawerTile extends StatelessWidget {
                   ),
                 ),
               ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 16,
-                color: ColorsManager.primary.withValues(alpha: .5),
-              ),
+              trailing ??
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 16,
+                    color: ColorsManager.primary.withValues(alpha: .5),
+                  ),
             ],
           ),
         ),

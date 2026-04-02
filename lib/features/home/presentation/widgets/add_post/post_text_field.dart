@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/constants/primary/primary_text_field.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 
 class PostTextField extends StatelessWidget {
-  const PostTextField({super.key});
+  final FocusNode? focusNode;
+
+  const PostTextField({super.key, this.focusNode});
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
+    return PrimaryTextField(
       controller: homeCubit.postTextController,
-      decoration: InputDecoration(
-        hintText: appTranslation().get("what_on_your_mind"),
-        border: InputBorder.none,
-      ),
+      focusNode: focusNode,
+      hintText: appTranslation().get("what_on_your_mind"),
       maxLines: null,
+      useCardDecoration: false,
+      keyboardType: TextInputType.multiline,
     );
   }
 }

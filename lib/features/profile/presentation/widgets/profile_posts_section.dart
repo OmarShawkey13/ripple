@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:ripple/core/models/post_model.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/theme/text_styles.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
+import 'package:ripple/core/utils/constants/primary/conditional_builder.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
-import 'package:ripple/core/models/post_model.dart';
 import 'package:ripple/features/home/presentation/widgets/post_card.dart';
 
 class ProfilePostsSection extends StatelessWidget {
@@ -29,8 +30,10 @@ class ProfilePostsSection extends StatelessWidget {
           ),
         ),
         verticalSpace8,
-        if (posts.isEmpty)
-          Padding(
+        ConditionalBuilder(
+          loadingState: false,
+          emptyState: posts.isEmpty,
+          emptyBuilder: (context) => Padding(
             padding: const EdgeInsets.symmetric(vertical: 32),
             child: Text(
               appTranslation().get('no_posts_yet'),
@@ -38,9 +41,8 @@ class ProfilePostsSection extends StatelessWidget {
                 color: ColorsManager.textSecondaryColor,
               ),
             ),
-          )
-        else
-          ListView.builder(
+          ),
+          successBuilder: (context) => ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: posts.length,
@@ -54,6 +56,7 @@ class ProfilePostsSection extends StatelessWidget {
               );
             },
           ),
+        ),
       ],
     );
   }

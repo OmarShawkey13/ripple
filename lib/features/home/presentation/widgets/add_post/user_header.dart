@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:ripple/core/theme/emoji_text.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 
 class UserHeader extends StatelessWidget {
   const UserHeader({super.key});
@@ -18,9 +18,7 @@ class UserHeader extends StatelessWidget {
           backgroundImage: user?.photoUrl != null
               ? CachedNetworkImageProvider(user!.photoUrl!)
               : null,
-          child: user?.photoUrl == null
-              ? const Icon(Icons.person)
-              : null,
+          child: user?.photoUrl == null ? const Icon(Icons.person) : null,
         ),
         horizontalSpace16,
         Expanded(

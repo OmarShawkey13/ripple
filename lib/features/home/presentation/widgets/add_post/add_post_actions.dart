@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ripple/core/theme/colors.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 
 class AddPostActions extends StatelessWidget {
   final bool isEmojiVisible;
@@ -27,9 +27,7 @@ class AddPostActions extends StatelessWidget {
           ),
           IconButton(
             icon: Icon(
-              isEmojiVisible
-                  ? Icons.keyboard
-                  : Icons.emoji_emotions_outlined,
+              isEmojiVisible ? Icons.keyboard : Icons.emoji_emotions_outlined,
             ),
             color: ColorsManager.primary,
             onPressed: () {

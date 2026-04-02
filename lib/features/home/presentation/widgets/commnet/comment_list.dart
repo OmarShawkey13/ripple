@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ripple/core/models/post_model.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
+import 'package:ripple/core/utils/constants/primary/loading_indicator.dart';
+import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 import 'package:ripple/features/home/presentation/widgets/commnet/comment_item.dart';
 
 class CommentList extends StatelessWidget {
@@ -27,7 +28,7 @@ class CommentList extends StatelessWidget {
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: LoadingIndicator());
         }
       },
     );

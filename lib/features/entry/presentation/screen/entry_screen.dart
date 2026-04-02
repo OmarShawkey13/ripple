@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:ripple/core/network/local/cache_helper.dart';
+import 'package:ripple/core/utils/constants/primary/loading_indicator.dart';
 import 'package:ripple/core/utils/constants/routes.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
 
@@ -53,7 +54,7 @@ class _EntryScreenState extends State<EntryScreen> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
+      body: Center(child: LoadingIndicator()),
     );
   }
 }

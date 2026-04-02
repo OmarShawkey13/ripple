@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase
+assets/firebase/ripple-bdb2b-a82900c2a752.json

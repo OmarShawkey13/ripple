@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -17,9 +16,9 @@ import 'package:ripple/core/network/notification_repository.dart';
 import 'package:ripple/core/network/post_repository.dart';
 import 'package:ripple/core/network/service/notification_service.dart';
 import 'package:ripple/core/network/user_repository.dart';
+import 'package:ripple/core/theme/emoji_controller.dart';
 import 'package:ripple/core/utils/constants/routes.dart';
-import 'package:ripple/core/utils/constants/translations.dart';
-import 'package:ripple/core/utils/cubit/home_state.dart';
+import 'package:ripple/core/utils/cubit/home/home_state.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
 import 'package:ripple/main.dart';
 import 'package:image_picker/image_picker.dart';
@@ -30,267 +29,11 @@ class HomeCubit extends Cubit<HomeStates> {
   HomeCubit() : super(HomeInitialState());
 
   static HomeCubit get(BuildContext context) => BlocProvider.of(context);
+
   final PostRepository postRepo = PostRepository();
   final NotificationRepository notificationRepo = NotificationRepository();
-
-  bool _isDarkMode = false;
-
-  bool get isDarkMode => _isDarkMode;
-
-  void changeTheme({bool? fromShared}) {
-    _isDarkMode = fromShared ?? !_isDarkMode;
-    CacheHelper.saveData(key: 'isDark', value: _isDarkMode);
-    emit(HomeChangeThemeState());
-  }
-
-  bool _isArabicLang = false;
-  TranslationModel? _translationModel;
-
-  // Getters فقط (لا نسمح لأي كود خارجي يعدل القيمة)
-  bool get isArabicLang => _isArabicLang;
-
-  TranslationModel? get translationModel => _translationModel;
-
-  /// تغيير اللغة — الدالة الرسمية الوحيدة
-  Future<void> changeLanguage({
-    required bool isArabic,
-    required String translations,
-  }) async {
-    try {
-      if (_isArabicLang == isArabic && _translationModel != null) {
-        emit(HomeLanguageUpdatedState());
-        return;
-      }
-      emit(HomeLanguageLoadingState());
-      final model = TranslationModel.fromJson(json.decode(translations));
-      _isArabicLang = isArabic;
-      _translationModel = model;
-      emit(HomeLanguageUpdatedState());
-    } catch (e) {
-      emit(HomeLanguageErrorState(e.toString()));
-    }
-  }
-
-  Future<void> initializeLanguage({
-    required bool isArabic,
-    required String translations,
-  }) async {
-    try {
-      _isArabicLang = isArabic;
-      _translationModel = TranslationModel.fromJson(json.decode(translations));
-      emit(HomeLanguageLoadedState());
-    } catch (e) {
-      emit(HomeLanguageErrorState(e.toString()));
-    }
-  }
-
-  //login
-  final Map<String, bool> _passwordVisibility = {
-    'login': false,
-    'register': false,
-  };
-
-  Map<String, bool> get passwordVisibility => _passwordVisibility;
-
-  void togglePasswordVisibility(String key) {
-    _passwordVisibility[key] = !_passwordVisibility[key]!;
-    emit(HomeShowPasswordUpdatedState());
-  }
-
-  // (افترض وجود تعريفات HomeState و UserModel)
-  final TextEditingController loginEmailController = TextEditingController();
-  final TextEditingController loginPasswordController = TextEditingController();
   final UserRepository userRepo = UserRepository();
   StreamSubscription? _userSubscription;
-
-  Future<void> login() async {
-    emit(HomeLoginLoadingState());
-    final email = loginEmailController.text.trim();
-    final password = loginPasswordController.text.trim();
-    try {
-      final user = await _signInUser(email, password);
-      // NEW: Update FCM Token on Login
-      final fcmToken = await FirebaseMessaging.instance.getToken();
-      await userRepo.updateUserField(user.uid, {'fcmToken': fcmToken});
-      
-      // NEW: Send Login Alert Notification
-      await _sendLoginAlert(user);
-
-      listenToUserData(); // Start listening to user data changes
-
-      final refreshedUser = await _reloadUser(user);
-      emit(HomeLoginSuccessState(refreshedUser));
-    } on FirebaseAuthException catch (e) {
-      emit(HomeLoginErrorState(_mapAuthError(e)));
-    } catch (e) {
-      emit(HomeLoginErrorState("Something went wrong. Please try again."));
-    }
-  }
-  
-  Future<void> _sendLoginAlert(User user) async {
-    try {
-      final deviceInfo = DeviceInfoPlugin();
-      Map<String, dynamic> deviceData = {};
-      
-      if (Platform.isAndroid) {
-        final androidInfo = await deviceInfo.androidInfo;
-        deviceData = {
-          'brand': androidInfo.brand,
-          'model': androidInfo.model,
-          'device': androidInfo.device,
-          'version': androidInfo.version.release,
-          'platform': 'Android',
-        };
-      } else if (Platform.isIOS) {
-        final iosInfo = await deviceInfo.iosInfo;
-        deviceData = {
-          'name': iosInfo.name,
-          'model': iosInfo.model,
-          'systemName': iosInfo.systemName,
-          'systemVersion': iosInfo.systemVersion,
-          'platform': 'iOS',
-        };
-      }
-      
-      // Get current user data to ensure we have name/photo (might be null if just signed in, so we fetch)
-      final userData = await userRepo.getUser(user.uid);
-      if (userData == null) return;
-
-      await notificationRepo.sendNotification(
-        senderId: user.uid, // System or self
-        senderName: "Security Alert", // Or App Name
-        senderProfilePic: "", // Optional: App Logo
-        receiverId: user.uid,
-        type: 'login_alert',
-        text: 'New login detected from ${deviceData['model'] ?? 'Unknown Device'}',
-        deviceInfo: deviceData,
-      );
-      
-    } catch (e) {
-      debugPrint("Error sending login alert: $e");
-    }
-  }
-
-  /// ------------------ HELPERS ------------------
-
-  Future<User> _signInUser(String email, String password) async {
-    final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    return credential.user!;
-  }
-
-  Future<User> _registerUser(String email, String password) async {
-    final res = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    return res.user!;
-  }
-
-  Future<User> _reloadUser(User user) async {
-    await user.reload();
-    return FirebaseAuth.instance.currentUser!;
-  }
-
-  Future<void> _createUserInFirestore(User user) async {
-    String photoUrl = "";
-
-    if (registerProfileImage != null) {
-      photoUrl = await uploadImageToCloudinary(registerProfileImage!);
-    }
-    final userModel = UserModel(
-      uid: user.uid,
-      email: user.email!,
-      username: registerNameController.text.trim(),
-      photoUrl: photoUrl,
-      coverUrl: "",
-      bio: "Hello i'm using Ripple",
-      createdAt: DateTime.now(),
-    );
-
-    await userRepo.createUser(userModel);
-  }
-
-  File? registerProfileImage;
-  final TextEditingController registerNameController = TextEditingController();
-  final TextEditingController registerEmailController = TextEditingController();
-  final TextEditingController registerPasswordController =
-      TextEditingController();
-
-  Future<void> pickRegisterProfileImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      registerProfileImage = File(pickedFile.path);
-      emit(HomeProfileImagePickedState());
-    }
-  }
-
-  Future<String> uploadImageToCloudinary(File imageFile) async {
-    const cloudName = 'dvv07qlxn';
-    const uploadPreset = 'userProfile';
-    final uri = Uri.parse(
-      'https://api.cloudinary.com/v1_1/$cloudName/image/upload',
-    );
-    final request = http.MultipartRequest('POST', uri)
-      ..fields['upload_preset'] = uploadPreset
-      ..files.add(
-        await http.MultipartFile.fromPath(
-          'file',
-          imageFile.path,
-        ),
-      );
-    final response = await request.send();
-    final res = await http.Response.fromStream(response);
-    if (res.statusCode == 200) {
-      final data = jsonDecode(res.body);
-      return data['secure_url'];
-    } else {
-      throw Exception('Cloudinary upload failed');
-    }
-  }
-
-  Future<void> register() async {
-    emit(HomeRegisterLoadingState());
-
-    final email = registerEmailController.text.trim();
-    final password = registerPasswordController.text.trim();
-
-    try {
-      final user = await _registerUser(email, password);
-      await _createUserInFirestore(user);
-
-      emit(HomeRegisterSuccessState(user));
-      registerProfileImage = null;
-      registerNameController.clear();
-      registerEmailController.clear();
-      registerPasswordController.clear();
-    } on FirebaseAuthException catch (e) {
-      emit(HomeRegisterErrorState(_mapAuthError(e)));
-    } catch (e) {
-      emit(HomeRegisterErrorState("Something went wrong. Please try again."));
-    }
-  }
-
-  String _mapAuthError(FirebaseAuthException e) {
-    switch (e.code) {
-      case 'user-not-found':
-        return 'No account found with this email.';
-      case 'wrong-password':
-        return 'Incorrect password.';
-      case 'email-already-in-use':
-        return 'This email is already registered.';
-      case 'weak-password':
-        return 'Password should be at least 8 characters.';
-      case 'invalid-email':
-        return 'Invalid email address.';
-      default:
-        return 'Authentication failed. Please try again.';
-    }
-  }
 
   //getDataUser
   UserModel? userModel;
@@ -315,24 +58,29 @@ class HomeCubit extends Cubit<HomeStates> {
 
     _userSubscription?.cancel(); // Cancel any existing subscription
 
-    _userSubscription = userRepo.getUserStream(uid).listen((user) async {
-      if (user == null) return; // Should not happen if user is logged in
+    _userSubscription = userRepo
+        .getUserStream(uid)
+        .listen(
+          (user) async {
+            if (user == null) return; // Should not happen if user is logged in
 
-      final currentToken = await FirebaseMessaging.instance.getToken();
+            final currentToken = await FirebaseMessaging.instance.getToken();
 
-      if (user.fcmToken != currentToken) {
-        // Another device has logged in, log this one out
-        logout(navigatorKey.currentContext!); 
-        return;
-      } 
+            if (user.fcmToken != currentToken) {
+              // Another device has logged in, log this one out
+              logout(navigatorKey.currentContext!);
+              return;
+            }
 
-      userModel = user;
-      await cacheUser(user);
-      emit(HomeGetUserSuccessState());
-    }, onError: (dynamic error) {
-      debugPrint("Error in user stream: $error");
-      emit(HomeGetUserErrorState(error.toString()));
-    });
+            userModel = user;
+            await cacheUser(user);
+            emit(HomeGetUserSuccessState());
+          },
+          onError: (dynamic error) {
+            debugPrint("Error in user stream: $error");
+            emit(HomeGetUserErrorState(error.toString()));
+          },
+        );
   }
 
   Future<void> getUserData() async {
@@ -367,7 +115,7 @@ class HomeCubit extends Cubit<HomeStates> {
   }
 
   // Posts
-  final postTextController = TextEditingController();
+  final EmojiTextEditingController postTextController = .new();
   List<PostModel> posts = [];
   File? postImage;
 
@@ -413,6 +161,30 @@ class HomeCubit extends Cubit<HomeStates> {
       emit(HomeAddPostSuccessState());
     } catch (e) {
       emit(HomeAddPostErrorState(e.toString()));
+    }
+  }
+
+  Future<String> uploadImageToCloudinary(File imageFile) async {
+    const cloudName = 'dvv07qlxn';
+    const uploadPreset = 'userProfile';
+    final uri = Uri.parse(
+      'https://api.cloudinary.com/v1_1/$cloudName/image/upload',
+    );
+    final request = http.MultipartRequest('POST', uri)
+      ..fields['upload_preset'] = uploadPreset
+      ..files.add(
+        await http.MultipartFile.fromPath(
+          'file',
+          imageFile.path,
+        ),
+      );
+    final response = await request.send();
+    final res = await http.Response.fromStream(response);
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+      return data['secure_url'];
+    } else {
+      throw Exception('Cloudinary upload failed');
     }
   }
 
@@ -472,7 +244,7 @@ class HomeCubit extends Cubit<HomeStates> {
     }
   }
 
-  final commentController = TextEditingController();
+  final EmojiTextEditingController commentController = .new();
 
   Future<void> addComment(String postId, String postOwnerId) async {
     if (userModel == null) {
@@ -612,8 +384,8 @@ class HomeCubit extends Cubit<HomeStates> {
   File? profileImage;
   File? coverImage;
 
-  final usernameController = TextEditingController();
-  final bioController = TextEditingController();
+  final TextEditingController usernameController = .new();
+  final TextEditingController bioController = .new();
 
   Future<void> pickProfileImage() async {
     final picker = ImagePicker();
@@ -675,7 +447,7 @@ class HomeCubit extends Cubit<HomeStates> {
   }
 
   //editPost
-  final TextEditingController editPostController = TextEditingController();
+  final EmojiTextEditingController editPostController = .new();
   File? editPostImage;
   String? editPostImageUrl;
 

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:ripple/core/network/local/cache_helper.dart';
 import 'package:ripple/core/utils/constants/assets_helper.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
 import 'package:ripple/core/utils/constants/routes.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
 import 'package:ripple/features/on_boarding/data/models/onboarding_item.dart';
 import 'package:ripple/features/on_boarding/presentation/widgets/onboarding_footer.dart';
 import 'package:ripple/features/on_boarding/presentation/widgets/onboarding_indicator.dart';
@@ -49,37 +47,29 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark.copyWith(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: homeCubit.isDarkMode
-            ? Brightness.light
-            : Brightness.dark,
-      ),
-      child: Scaffold(
-        body: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: PageView.builder(
-                  controller: _controller,
-                  itemCount: pages.length,
-                  onPageChanged: (value) => setState(() => _index = value),
-                  itemBuilder: (_, i) => OnBoardingPageItem(item: pages[i]),
-                ),
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: PageView.builder(
+                controller: _controller,
+                itemCount: pages.length,
+                onPageChanged: (value) => setState(() => _index = value),
+                itemBuilder: (_, i) => OnBoardingPageItem(item: pages[i]),
               ),
-              OnBoardingIndicator(currentIndex: _index, length: pages.length),
-              OnBoardingFooter(
-                isLast: isLast,
-                onSkip: finish,
-                onNext: () => _controller.nextPage(
-                  duration: const Duration(milliseconds: 350),
-                  curve: Curves.easeInOut,
-                ),
-                onStart: finish,
+            ),
+            OnBoardingIndicator(currentIndex: _index, length: pages.length),
+            OnBoardingFooter(
+              isLast: isLast,
+              onSkip: finish,
+              onNext: () => _controller.nextPage(
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeInOut,
               ),
-            ],
-          ),
+              onStart: finish,
+            ),
+          ],
         ),
       ),
     );

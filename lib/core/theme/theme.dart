@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/theme/text_styles.dart';
 
@@ -9,6 +10,11 @@ class AppTheme {
     scaffoldBackgroundColor: ColorsManager.lightBackground,
     appBarTheme: AppBarTheme(
       backgroundColor: ColorsManager.lightBackground,
+      systemOverlayStyle: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
       foregroundColor: ColorsManager.lightTextPrimary,
       titleTextStyle: TextStylesManager.bold22.copyWith(
         color: ColorsManager.lightTextPrimary,
@@ -33,6 +39,11 @@ class AppTheme {
     scaffoldBackgroundColor: ColorsManager.darkBackground,
     appBarTheme: AppBarTheme(
       backgroundColor: ColorsManager.darkBackground,
+      systemOverlayStyle: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
       foregroundColor: ColorsManager.darkTextPrimary,
       titleTextStyle: TextStylesManager.bold22.copyWith(
         color: ColorsManager.darkTextPrimary,

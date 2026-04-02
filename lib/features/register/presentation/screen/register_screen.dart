@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
 import 'package:ripple/core/utils/constants/routes.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
-import 'package:ripple/core/utils/cubit/home_cubit.dart';
-import 'package:ripple/core/utils/cubit/home_state.dart';
+import 'package:ripple/core/utils/cubit/auth/auth_cubit.dart';
+import 'package:ripple/core/utils/cubit/auth/auth_state.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
 import 'package:ripple/features/register/presentation/widgets/register_button.dart';
 import 'package:ripple/features/register/presentation/widgets/register_email_field.dart';
@@ -21,14 +20,13 @@ class RegisterScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<HomeCubit, HomeStates>(
+    return BlocConsumer<AuthCubit, AuthStates>(
       buildWhen: (_, state) =>
-          state is HomeShowPasswordUpdatedState ||
-          state is HomeRegisterLoadingState ||
-          state is HomeRegisterSuccessState ||
-          state is HomeRegisterErrorState,
+          state is AuthRegisterLoadingState ||
+          state is AuthRegisterSuccessState ||
+          state is AuthRegisterErrorState,
       listener: (context, state) {
-        if (state is HomeRegisterSuccessState) {
+        if (state is AuthRegisterSuccessState) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -40,7 +38,7 @@ class RegisterScreen extends StatelessWidget {
             ),
           );
           context.pushReplacement<Object>(Routes.login);
-        } else if (state is HomeRegisterErrorState) {
+        } else if (state is AuthRegisterErrorState) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.error),
@@ -52,33 +50,27 @@ class RegisterScreen extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        final isDark = homeCubit.isDarkMode;
-        return AnnotatedRegion<SystemUiOverlayStyle>(
-          value: isDark
-              ? SystemUiOverlayStyle.light
-              : SystemUiOverlayStyle.dark,
-          child: Scaffold(
-            body: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 28),
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    children: [
-                      const RegisterProfileImage(),
-                      verticalSpace40,
-                      const RegisterNameField(),
-                      verticalSpace20,
-                      const RegisterEmailField(),
-                      verticalSpace20,
-                      const RegisterPasswordField(),
-                      verticalSpace30,
-                      RegisterButton(
-                        formKey: formKey,
-                        isLoading: state is HomeRegisterLoadingState,
-                      ),
-                    ],
-                  ),
+        return Scaffold(
+          body: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  children: [
+                    const RegisterProfileImage(),
+                    verticalSpace40,
+                    const RegisterNameField(),
+                    verticalSpace20,
+                    const RegisterEmailField(),
+                    verticalSpace20,
+                    const RegisterPasswordField(),
+                    verticalSpace30,
+                    RegisterButton(
+                      formKey: formKey,
+                      isLoading: state is AuthRegisterLoadingState,
+                    ),
+                  ],
                 ),
               ),
             ),
