@@ -13,7 +13,7 @@ class HomeFAB extends StatelessWidget {
         context.push<Object>(Routes.addPost);
       },
       backgroundColor: ColorsManager.primary,
-      foregroundColor: ColorsManager.lightCard,
+      foregroundColor: ColorsManager.cardColor,
       child: const Icon(Icons.add),
     );
   }

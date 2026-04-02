@@ -5,9 +5,6 @@ import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/theme/emoji_text.dart';
 import 'package:ripple/core/theme/text_styles.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
-import 'package:ripple/core/utils/constants/primary/conditional_builder.dart';
-import 'package:ripple/core/utils/constants/primary/image_preview_page.dart';
-import 'package:ripple/core/utils/constants/primary/primary_button.dart';
 import 'package:ripple/core/utils/constants/routes.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
 import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
@@ -44,54 +41,120 @@ class ProfileHeader extends StatelessWidget {
 
     return Column(
       children: [
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute<Object>(
-                builder: (context) => ImagePreviewPage(url: user.photoUrl!),
-              ),
-            );
-          },
-          child: CircleAvatar(
-            radius: profileRadius + 4,
-            backgroundColor: ColorsManager.backgroundColor,
-            child: CircleAvatar(
-              radius: profileRadius,
-              backgroundImage: user.photoUrl!.isNotEmpty
-                  ? CachedNetworkImageProvider(user.photoUrl!)
-                  : null,
-              child: ConditionalBuilder(
-                loadingState: user.photoUrl!.isEmpty,
-                successBuilder: (context) => const SizedBox.shrink(),
-                loadingBuilder: (context) => const Icon(Icons.person, size: 48),
-              ),
-            ),
-          ),
-        ),
+        _buildProfileImage(context),
         verticalSpace12,
         EmojiText(
-          text: user.username!,
-          style: TextStylesManager.bold20,
+          text: user.username ?? '',
+          style: TextStylesManager.bold22.copyWith(letterSpacing: 0.5),
         ),
-        verticalSpace6,
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: EmojiText(
-            text: user.bio!,
-            textAlign: TextAlign.center,
-            style: TextStylesManager.regular14.copyWith(
-              color: ColorsManager.textSecondaryColor,
+        verticalSpace8,
+        if (user.bio != null && user.bio!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: EmojiText(
+              text: user.bio!,
+              textAlign: TextAlign.center,
+              style: TextStylesManager.regular14.copyWith(
+                color: ColorsManager.textSecondaryColor,
+                height: 1.4,
+              ),
             ),
           ),
+        verticalSpace20,
+        _buildStatsRow(),
+        verticalSpace24,
+        _buildActionButton(context, isCurrentUser, isFollowing, buttonText),
+        verticalSpace24,
+        Divider(
+          height: 1,
+          thickness: 1,
+          color: ColorsManager.dividerColor.withValues(alpha: 0.1),
         ),
-        verticalSpace12,
-        ConditionalBuilder(
-          loadingState: false,
-          emptyState: !isCurrentUser,
-          emptyBuilder: (context) => SizedBox(
-            width: 150,
-            child: PrimaryButton(
+      ],
+    );
+  }
+
+  Widget _buildProfileImage(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: ColorsManager.backgroundColor,
+          width: 4,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: CircleAvatar(
+        radius: profileRadius,
+        backgroundColor: ColorsManager.surfaceContainer,
+        backgroundImage: user.photoUrl != null && user.photoUrl!.isNotEmpty
+            ? CachedNetworkImageProvider(user.photoUrl!)
+            : null,
+        child: user.photoUrl == null || user.photoUrl!.isEmpty
+            ? Icon(
+                Icons.person_outline,
+                size: profileRadius,
+                color: ColorsManager.primary,
+              )
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildStatsRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _StatItem(
+          label: appTranslation().get('posts'),
+          value: postCount.toString(),
+        ),
+        _StatItem(
+          label: appTranslation().get('followers'),
+          value: user.followers.length.toString(),
+        ),
+        _StatItem(
+          label: appTranslation().get('following'),
+          value: user.following.length.toString(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton(
+    BuildContext context,
+    bool isCurrentUser,
+    bool isFollowing,
+    String buttonText,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: isCurrentUser
+          ? OutlinedButton(
+              onPressed: () => context.push<Object>(Routes.editProfile),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 44),
+                side: BorderSide(
+                  color: ColorsManager.primary.withValues(alpha: 0.5),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                appTranslation().get('edit_profile'),
+                style: TextStylesManager.bold14.copyWith(
+                  color: ColorsManager.primary,
+                ),
+              ),
+            )
+          : FilledButton(
               onPressed: () {
                 if (isFollowing) {
                   homeCubit.unfollowUser(user.uid!);
@@ -99,54 +162,41 @@ class ProfileHeader extends StatelessWidget {
                   homeCubit.followUser(user.uid!);
                 }
               },
-              backgroundColor: isFollowing
-                  ? Colors.grey
-                  : ColorsManager.primary,
-              text: buttonText,
-            ),
-          ),
-          successBuilder: (context) => OutlinedButton(
-            onPressed: () {
-              context.push<Object>(Routes.editProfile);
-            },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: ColorsManager.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(double.infinity, 44),
+                backgroundColor: isFollowing
+                    ? ColorsManager.surfaceContainer
+                    : ColorsManager.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                buttonText,
+                style: TextStylesManager.bold14.copyWith(
+                  color: isFollowing ? ColorsManager.textColor : Colors.white,
+                ),
               ),
             ),
-            child: Text(appTranslation().get('edit_profile')),
-          ),
-        ),
-        verticalSpace12,
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildStatColumn('Posts', postCount.toString()),
-            _buildStatColumn('Followers', user.followers.length.toString()),
-            _buildStatColumn('Following', user.following.length.toString()),
-          ],
-        ),
-        verticalSpace16,
-        Divider(
-          color: ColorsManager.textSecondaryColor.withValues(alpha: 0.2),
-        ),
-        verticalSpace16,
-      ],
     );
   }
+}
 
-  Widget _buildStatColumn(String title, String value) {
+class _StatItem extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _StatItem({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(
-          value,
-          style: TextStylesManager.bold16,
-        ),
+        Text(value, style: TextStylesManager.bold18),
         verticalSpace4,
         Text(
-          title,
-          style: TextStylesManager.regular14.copyWith(
+          label,
+          style: TextStylesManager.regular12.copyWith(
             color: ColorsManager.textSecondaryColor,
           ),
         ),

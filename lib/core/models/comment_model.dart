@@ -7,6 +7,7 @@ class CommentModel {
   final String userProfilePic;
   final String text;
   final Timestamp timestamp;
+  final List<CommentModel> replies;
 
   CommentModel({
     required this.commentId,
@@ -15,6 +16,7 @@ class CommentModel {
     required this.userProfilePic,
     required this.text,
     required this.timestamp,
+    this.replies = const [],
   });
 
   factory CommentModel.fromMap(Map<String, dynamic> map, String commentId) {
@@ -25,6 +27,11 @@ class CommentModel {
       userProfilePic: map['userProfilePic'] as String,
       text: map['text'] as String,
       timestamp: map['timestamp'] as Timestamp,
+      replies: (map['replies'] as List<dynamic>? ?? [])
+          .asMap()
+          .entries
+          .map((e) => CommentModel.fromMap(e.value, e.key.toString()))
+          .toList(),
     );
   }
 
@@ -35,6 +42,27 @@ class CommentModel {
       'userProfilePic': userProfilePic,
       'text': text,
       'timestamp': timestamp,
+      'replies': replies.map((r) => r.toMap()).toList(),
     };
+  }
+
+  CommentModel copyWith({
+    String? commentId,
+    String? userId,
+    String? username,
+    String? userProfilePic,
+    String? text,
+    Timestamp? timestamp,
+    List<CommentModel>? replies,
+  }) {
+    return CommentModel(
+      commentId: commentId ?? this.commentId,
+      userId: userId ?? this.userId,
+      username: username ?? this.username,
+      userProfilePic: userProfilePic ?? this.userProfilePic,
+      text: text ?? this.text,
+      timestamp: timestamp ?? this.timestamp,
+      replies: replies ?? this.replies,
+    );
   }
 }

@@ -46,3 +46,6 @@ app.*.map.json
 
 # Firebase
 assets/firebase/ripple-bdb2b-a82900c2a752.json
+
+# Cursor
+.cursorrules

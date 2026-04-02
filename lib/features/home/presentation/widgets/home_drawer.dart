@@ -4,7 +4,6 @@ import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/theme/text_styles.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
 import 'package:ripple/core/utils/constants/routes.dart';
-import 'package:ripple/core/utils/constants/spacing.dart';
 import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 import 'package:ripple/core/utils/cubit/home/home_state.dart';
 import 'package:ripple/core/utils/cubit/theme/theme_cubit.dart';
@@ -20,78 +19,80 @@ class HomeDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, state) {
+        final isDark = themeCubit.isDarkMode;
+        final isArabic = themeCubit.isArabicLang;
         return BlocBuilder<HomeCubit, HomeStates>(
           buildWhen: (previous, current) =>
-              current is HomeGetUserSuccessState ||
-              current is HomeGetUserErrorState,
+              current is HomeGetCurrentUserSuccessState ||
+              current is HomeGetCurrentUserErrorState,
           builder: (context, state) {
             final user = homeCubit.userModel;
-            final isDark = themeCubit.isDarkMode;
-            final isArabic = themeCubit.isArabicLang;
             return Drawer(
+              backgroundColor: ColorsManager.backgroundColor,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   HomeDrawerHeader(user: user),
-                  verticalSpace8,
                   Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          HomeDrawerTile(
-                            title: appTranslation().get('home'),
-                            icon: Icons.home_rounded,
-                            onTap: () => context.pop,
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      children: [
+                        HomeDrawerTile(
+                          title: appTranslation().get('home'),
+                          icon: Icons.home_outlined,
+                          onTap: () => context.pop,
+                        ),
+                        HomeDrawerTile(
+                          title: appTranslation().get('profile'),
+                          icon: Icons.person_outline_rounded,
+                          onTap: () {
+                            context.pop;
+                            context.push<Object>(Routes.profile);
+                          },
+                        ),
+                        HomeDrawerTile(
+                          title: appTranslation().get('notifications'),
+                          icon: Icons.notifications_none_rounded,
+                          onTap: () {
+                            context.pop;
+                            context.push<Object>(Routes.notifications);
+                          },
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 8,
                           ),
-                          HomeDrawerTile(
-                            title: appTranslation().get('profile'),
-                            icon: Icons.person_rounded,
-                            onTap: () {
-                              context.pop;
-                              context.push<Object>(Routes.profile);
-                            },
+                          child: Divider(),
+                        ),
+                        HomeDrawerTile(
+                          title: appTranslation().get('dark_mode'),
+                          icon: isDark
+                              ? Icons.dark_mode_outlined
+                              : Icons.light_mode_outlined,
+                          trailing: Switch.adaptive(
+                            value: isDark,
+                            activeThumbColor: ColorsManager.primary,
+                            onChanged: (val) => themeCubit.changeTheme(),
                           ),
-                          HomeDrawerTile(
-                            title: appTranslation().get('notifications'),
-                            icon: Icons.notifications_rounded,
-                            onTap: () {
-                              context.pop;
-                              context.push<Object>(Routes.notifications);
-                            },
+                        ),
+                        HomeDrawerTile(
+                          title: appTranslation().get('language'),
+                          icon: Icons.translate_rounded,
+                          trailing: Switch.adaptive(
+                            value: isArabic,
+                            activeThumbColor: ColorsManager.primary,
+                            onChanged: (val) => themeCubit.toggleLanguage(),
                           ),
-                          HomeDrawerTile(
-                            title: appTranslation().get('about_ripple'),
-                            icon: Icons.info_rounded,
-                            onTap: () {
-                              context.pop;
-                              context.push<Object>(Routes.about);
-                            },
-                          ),
-                          HomeDrawerTile(
-                            title: appTranslation().get('dark_mode'),
-                            icon: isDark
-                                ? Icons.dark_mode_rounded
-                                : Icons.light_mode_rounded,
-                            trailing: Switch(
-                              value: isDark,
-                              activeThumbColor: ColorsManager.primary,
-                              onChanged: (val) => themeCubit.changeTheme(),
-                              materialTapTargetSize: .shrinkWrap,
-                            ),
-                          ),
-                          HomeDrawerTile(
-                            title: appTranslation().get('language'),
-                            icon: Icons.language_rounded,
-                            trailing: Switch(
-                              value: isArabic,
-                              activeThumbColor: ColorsManager.primary,
-                              onChanged: (val) => themeCubit.toggleLanguage(),
-                              materialTapTargetSize: .shrinkWrap,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                        HomeDrawerTile(
+                          title: appTranslation().get('about_ripple'),
+                          icon: Icons.info_outline_rounded,
+                          onTap: () {
+                            context.pop;
+                            context.push<Object>(Routes.about);
+                          },
+                        ),
+                      ],
                     ),
                   ),
                   const Divider(height: 1),
@@ -101,12 +102,12 @@ class HomeDrawer extends StatelessWidget {
                     onTap: () => homeCubit.logout(context),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Center(
-                      child: Text(
-                        "Ripple v1.0.0",
-                        style: TextStylesManager.regular12.copyWith(
-                          color: Colors.grey.withValues(alpha: 0.6),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      "Ripple v1.0.0",
+                      style: TextStylesManager.regular12.copyWith(
+                        color: ColorsManager.textSecondaryColor.withValues(
+                          alpha: 0.5,
                         ),
                       ),
                     ),

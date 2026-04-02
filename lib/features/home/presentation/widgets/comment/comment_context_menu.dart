@@ -5,7 +5,7 @@ import 'package:ripple/core/utils/constants/constants.dart';
 import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 import 'package:ripple/core/utils/cubit/theme/theme_cubit.dart';
 import 'package:ripple/features/home/data/model/context_menu.dart';
-import 'package:ripple/features/home/presentation/widgets/commnet/ios_style_context_menu.dart';
+import 'package:ripple/features/home/presentation/widgets/comment/ios_style_context_menu.dart';
 
 class CommentContextMenu extends StatelessWidget {
   final bool isMe;

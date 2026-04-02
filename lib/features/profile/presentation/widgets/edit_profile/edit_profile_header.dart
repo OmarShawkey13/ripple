@@ -21,27 +21,43 @@ class EditProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        CircleAvatar(
-          radius: profileRadius + 4,
-          backgroundColor: ColorsManager.backgroundColor,
-          child: CircleAvatar(
-            radius: profileRadius,
-            backgroundImage: _buildProfileImage(),
-            child: Stack(
-              alignment: Alignment.bottomRight,
-              children: [
-                if (cubit.profileImage == null && user.photoUrl!.isEmpty)
-                  const Center(
-                    child: Icon(Icons.person, size: 48),
-                  ),
-                EditProfileCircleIconButton(
-                  icon: Icons.camera_alt,
-                  onTap: () {
-                    cubit.pickProfileImage();
-                  },
-                ),
-              ],
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: ColorsManager.backgroundColor,
+              width: 4,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              CircleAvatar(
+                radius: profileRadius,
+                backgroundColor: ColorsManager.surfaceContainer,
+                backgroundImage: _buildProfileImage(),
+                child:
+                    cubit.profileImage == null &&
+                        (user.photoUrl == null || user.photoUrl!.isEmpty)
+                    ? Icon(
+                        Icons.person_outline,
+                        size: profileRadius,
+                        color: ColorsManager.primary,
+                      )
+                    : null,
+              ),
+              EditProfileCircleIconButton(
+                icon: Icons.camera_alt_rounded,
+                onTap: () => cubit.pickProfileImage(),
+              ),
+            ],
           ),
         ),
         verticalSpace16,
@@ -53,8 +69,8 @@ class EditProfileHeader extends StatelessWidget {
     if (cubit.profileImage != null) {
       return FileImage(cubit.profileImage!);
     }
-    if (user.photoUrl.isNotEmpty) {
-      return CachedNetworkImageProvider(user.photoUrl);
+    if (user.photoUrl != null && user.photoUrl!.isNotEmpty) {
+      return CachedNetworkImageProvider(user.photoUrl!);
     }
     return null;
   }

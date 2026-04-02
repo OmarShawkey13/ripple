@@ -18,19 +18,24 @@ class EditProfileCircleIconButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: ColorsManager.cardColor,
+          color: ColorsManager.primary,
           shape: BoxShape.circle,
+          border: Border.all(
+            color: ColorsManager.backgroundColor,
+            width: 2,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Icon(
           icon,
-          color: ColorsManager.textColor,
           size: 20,
+          color: Colors.white,
         ),
       ),
     );

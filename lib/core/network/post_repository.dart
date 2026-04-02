@@ -99,10 +99,50 @@ class PostRepository {
       userProfilePic: userProfilePic,
       text: text,
       timestamp: Timestamp.now(),
+      replies: [],
     );
 
     await _firestore.collection('posts').doc(postId).update({
       'comments': FieldValue.arrayUnion([comment.toMap()]),
+    });
+  }
+
+  Future<void> addReply({
+    required String postId,
+    required String commentId,
+    required String userId,
+    required String username,
+    required String userProfilePic,
+    required String text,
+  }) async {
+    final postDoc = await _firestore.collection('posts').doc(postId).get();
+    if (!postDoc.exists) return;
+
+    final post = PostModel.fromMap(postDoc.data()!, postDoc.id);
+    final comments = List<CommentModel>.from(post.comments);
+
+    final commentIndex = comments.indexWhere((c) => c.commentId == commentId);
+    if (commentIndex == -1) return;
+
+    final replyId = const Uuid().v4();
+    final reply = CommentModel(
+      commentId: replyId,
+      userId: userId,
+      username: username,
+      userProfilePic: userProfilePic,
+      text: text,
+      timestamp: Timestamp.now(),
+      replies: [],
+    );
+
+    final updatedComment = comments[commentIndex].copyWith(
+      replies: [...comments[commentIndex].replies, reply],
+    );
+
+    comments[commentIndex] = updatedComment;
+
+    await _firestore.collection('posts').doc(postId).update({
+      'comments': comments.map((c) => c.toMap()).toList(),
     });
   }
 

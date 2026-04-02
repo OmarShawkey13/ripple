@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:ripple/core/theme/colors.dart';
+import 'package:ripple/core/theme/text_styles.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
-import 'package:ripple/core/utils/constants/primary/primary_text_field.dart';
 import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 
 class PostTextField extends StatelessWidget {
@@ -10,13 +11,22 @@ class PostTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PrimaryTextField(
+    return TextField(
       controller: homeCubit.postTextController,
       focusNode: focusNode,
-      hintText: appTranslation().get("what_on_your_mind"),
       maxLines: null,
-      useCardDecoration: false,
+      style: TextStylesManager.regular16.copyWith(
+        height: 1.5,
+      ),
       keyboardType: TextInputType.multiline,
+      decoration: InputDecoration(
+        hintText: appTranslation().get("what_on_your_mind"),
+        hintStyle: TextStylesManager.regular16.copyWith(
+          color: ColorsManager.textSecondaryColor.withValues(alpha: 0.5),
+        ),
+        border: InputBorder.none,
+        contentPadding: const EdgeInsets.symmetric(vertical: 16),
+      ),
     );
   }
 }

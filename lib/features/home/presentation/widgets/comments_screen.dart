@@ -4,8 +4,8 @@ import 'package:ripple/core/utils/constants/constants.dart';
 import 'package:ripple/core/utils/constants/primary/emoji_picker_container.dart';
 import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
-import 'package:ripple/features/home/presentation/widgets/commnet/comment_input_bar.dart';
-import 'package:ripple/features/home/presentation/widgets/commnet/comment_list.dart';
+import 'package:ripple/features/home/presentation/widgets/comment/comment_input_bar.dart';
+import 'package:ripple/features/home/presentation/widgets/comment/comment_list.dart';
 
 class CommentsScreen extends StatefulWidget {
   const CommentsScreen({super.key});

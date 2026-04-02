@@ -3,31 +3,32 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
 import 'package:ripple/core/utils/constants/primary/loading_indicator.dart';
+import 'package:ripple/core/utils/constants/spacing.dart';
 import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 import 'package:ripple/core/utils/cubit/home/home_state.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
-import 'package:ripple/features/profile/presentation/widgets/edit_profile/edit_profile_back_button.dart';
+import 'package:ripple/features/profile/presentation/widgets/edit_profile/edit_profile_app_bar.dart';
 import 'package:ripple/features/profile/presentation/widgets/edit_profile/edit_profile_cover.dart';
 import 'package:ripple/features/profile/presentation/widgets/edit_profile/edit_profile_form.dart';
 import 'package:ripple/features/profile/presentation/widgets/edit_profile/edit_profile_header.dart';
-import 'package:ripple/features/profile/presentation/widgets/edit_profile/edit_profile_save_button.dart';
 
 class EditProfileScreen extends StatelessWidget {
   const EditProfileScreen({super.key});
 
-  static const double coverHeight = 220;
-  static const double profileRadius = 52;
-
   @override
   Widget build(BuildContext context) {
     final user = homeCubit.userModel;
-    homeCubit.usernameController.text = user!.username ?? '';
+    if (user == null) return const SizedBox.shrink();
+
+    // Initialize controllers once
+    homeCubit.usernameController.text = user.username ?? '';
     homeCubit.bioController.text = user.bio ?? '';
+
     return BlocConsumer<HomeCubit, HomeStates>(
       buildWhen: (previous, current) =>
+          current is HomeUpdateProfileLoadingState ||
           current is HomeUpdateProfileSuccessState ||
           current is HomeUpdateProfileErrorState ||
-          current is HomeUpdateProfileLoadingState ||
           current is HomeProfileImagePickedState ||
           current is HomeCoverImagePickedState,
       listener: (context, state) {
@@ -38,52 +39,65 @@ class EditProfileScreen extends StatelessWidget {
                 appTranslation().get('profile_updated_successfully'),
               ),
               backgroundColor: ColorsManager.success,
-              duration: const Duration(seconds: 2),
               behavior: SnackBarBehavior.floating,
             ),
           );
           context.pop;
-        }
-      },
-      builder: (context, state) {
-        if (state is HomeUpdateProfileLoadingState) {
-          return const Scaffold(
-            body: Center(
-              child: LoadingIndicator(),
+        } else if (state is HomeUpdateProfileErrorState) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.error),
+              backgroundColor: ColorsManager.error,
+              behavior: SnackBarBehavior.floating,
             ),
           );
         }
+      },
+      builder: (context, state) {
+        final isLoading = state is HomeUpdateProfileLoadingState;
+
         return Scaffold(
           backgroundColor: ColorsManager.backgroundColor,
-          body: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                EditProfileCover(
-                  height: coverHeight,
-                  cubit: homeCubit,
-                  user: user,
+          appBar: EditProfileAppBar(
+            isLoading: isLoading,
+            onSave: () => homeCubit.updateProfile(),
+          ),
+          body: Stack(
+            children: [
+              SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    Stack(
+                      alignment: Alignment.bottomCenter,
+                      clipBehavior: Clip.none,
+                      children: [
+                        EditProfileCover(
+                          height: 200,
+                          cubit: homeCubit,
+                          user: user,
+                        ),
+                        Positioned(
+                          bottom: -50,
+                          child: EditProfileHeader(
+                            cubit: homeCubit,
+                            user: user,
+                            profileRadius: 60,
+                          ),
+                        ),
+                      ],
+                    ),
+                    verticalSpace60,
+                    const EditProfileForm(),
+                  ],
                 ),
-                const EditProfileBackButton(),
-                const EditProfileSaveButton(),
-                Padding(
-                  padding: const EdgeInsets.only(
-                    top: coverHeight - profileRadius,
-                  ),
-                  child: Column(
-                    children: [
-                      EditProfileHeader(
-                        cubit: homeCubit,
-                        user: user,
-                        profileRadius: profileRadius,
-                      ),
-                      const EditProfileForm(),
-                    ],
-                  ),
+              ),
+              if (isLoading)
+                Container(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  child: const Center(child: LoadingIndicator()),
                 ),
-              ],
-            ),
+            ],
           ),
         );
       },

@@ -115,7 +115,7 @@ class _EmojiPickerState extends State<EmojiPicker> {
     final bool isDark = themeCubit.isDarkMode;
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? ColorsManager.darkCard : ColorsManager.lightBackground,
+        color: ColorsManager.cardColor,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(16),
           topRight: Radius.circular(16),

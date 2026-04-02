@@ -46,7 +46,7 @@ class PrimaryButton extends StatelessWidget {
               Text(
                 text,
                 style: TextStylesManager.bold16.copyWith(
-                  color: textColor ?? ColorsManager.lightCard,
+                  color: textColor ?? ColorsManager.cardColor,
                 ),
               ),
         ),

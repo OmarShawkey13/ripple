@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ripple/core/models/user_model.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/utils/constants/primary/conditional_builder.dart';
+import 'package:ripple/core/utils/constants/spacing.dart';
 import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 import 'package:ripple/core/utils/cubit/home/home_state.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
@@ -11,93 +11,72 @@ import 'package:ripple/features/profile/presentation/widgets/profile_cover.dart'
 import 'package:ripple/features/profile/presentation/widgets/profile_header.dart';
 import 'package:ripple/features/profile/presentation/widgets/profile_posts_section.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
-  static const double coverHeight = 220;
-  static const double profileRadius = 52;
-  UserModel? viewedUser;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final userId = context.getArg<String?>();
-
-    if (userId == null || userId == homeCubit.userModel?.uid) {
-      viewedUser = homeCubit.userModel;
-      if (viewedUser != null) {
-        homeCubit.getMyPosts();
-      }
-    } else {
-      homeCubit.userRepo.getUser(userId).then((user) {
-        if (mounted) {
-          setState(() {
-            viewedUser = user;
-          });
-          if (user != null) {
-            homeCubit.postRepo.getUserPosts(user.uid!).listen((posts) {
-              if (mounted) {
-                setState(() {
-                  homeCubit.userPosts = posts;
-                });
-              }
-            });
-          }
-        }
-      });
-    }
-  }
+  static const double coverHeight = 240;
+  static const double profileRadius = 56;
 
   @override
   Widget build(BuildContext context) {
+    final userId = context.getArg<String?>();
+    homeCubit.initProfile(userId);
+
     return BlocBuilder<HomeCubit, HomeStates>(
       buildWhen: (previous, current) =>
-          current is HomeGetMyPostsSuccessState ||
-          current is HomeGetMyPostsErrorState ||
-          current is HomeGetMyPostsLoadingState ||
-          current is HomeLikePostSuccessState ||
-          current is HomeLikePostErrorState ||
-          current is HomeUpdateProfileSuccessState ||
+          current is HomeGetProfilePostsSuccessState ||
+          current is HomeGetProfilePostsLoadingState ||
+          current is HomeGetProfilePostsErrorState ||
+          current is HomeGetViewedUserSuccessState ||
+          current is HomeGetViewedUserLoadingState ||
+          current is HomeGetViewedUserErrorState ||
           current is HomeFollowUserSuccessState ||
           current is HomeUnfollowUserSuccessState,
       builder: (context, state) {
-        final posts = homeCubit.userPosts;
         final currentUser = homeCubit.userModel;
+        final viewedUser = (userId == null || userId == currentUser?.uid)
+            ? currentUser
+            : homeCubit.viewedUserModel;
+        final posts = homeCubit.userPosts;
 
-        return ConditionalBuilder(
-          loadingState: viewedUser == null || currentUser == null,
-          successBuilder: (context) => Scaffold(
-            backgroundColor: ColorsManager.backgroundColor,
-            body: SingleChildScrollView(
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  ProfileCover(
-                    height: coverHeight,
-                    imageUrl: viewedUser!.coverUrl,
-                  ),
-                  const ProfileBackButton(),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      top: coverHeight - profileRadius,
-                    ),
-                    child: Column(
+        return Scaffold(
+          backgroundColor: ColorsManager.backgroundColor,
+          body: ConditionalBuilder(
+            loadingState: viewedUser == null || currentUser == null,
+            successBuilder: (context) => RefreshIndicator(
+              onRefresh: () async => homeCubit.initProfile(userId),
+              color: ColorsManager.primary,
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Stack(
+                      clipBehavior: Clip.none,
                       children: [
-                        ProfileHeader(
-                          user: viewedUser!,
-                          profileRadius: profileRadius,
-                          currentUser: currentUser!,
-                          postCount: posts.length,
+                        ProfileCover(
+                          height: coverHeight,
+                          imageUrl: viewedUser!.coverUrl,
                         ),
-                        ProfilePostsSection(posts: posts),
+                        const ProfileBackButton(),
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            top: coverHeight - profileRadius,
+                          ),
+                          child: ProfileHeader(
+                            user: viewedUser,
+                            profileRadius: profileRadius,
+                            currentUser: currentUser!,
+                            postCount: posts.length,
+                          ),
+                        ),
                       ],
                     ),
                   ),
+                  SliverPadding(
+                    padding: const EdgeInsets.only(top: 8),
+                    sliver: ProfilePostsSection(posts: posts),
+                  ),
+                  SliverToBoxAdapter(child: verticalSpace32),
                 ],
               ),
             ),

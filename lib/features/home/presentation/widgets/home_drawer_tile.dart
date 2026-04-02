@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/theme/text_styles.dart';
-import 'package:ripple/core/utils/constants/spacing.dart';
-import 'package:ripple/core/utils/cubit/theme/theme_cubit.dart';
 
 class HomeDrawerTile extends StatelessWidget {
   final String title;
@@ -20,50 +18,36 @@ class HomeDrawerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = themeCubit.isDarkMode;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        splashColor: ColorsManager.primary.withValues(alpha: .12),
-        highlightColor: ColorsManager.primary.withValues(alpha: .06),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: ColorsManager.primary.withValues(
-                    alpha: isDark ? .18 : .12,
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  size: 20,
-                  color: ColorsManager.primary,
-                ),
-              ),
-              horizontalSpace16,
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStylesManager.bold16.copyWith(
-                    color: ColorsManager.textColor,
-                  ),
-                ),
-              ),
-              trailing ??
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 16,
-                    color: ColorsManager.primary.withValues(alpha: .5),
-                  ),
-            ],
-          ),
+    return ListTile(
+      onTap: onTap,
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: ColorsManager.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
         ),
+        child: Icon(
+          icon,
+          size: 22,
+          color: ColorsManager.primary,
+        ),
+      ),
+      title: Text(
+        title,
+        style: TextStylesManager.medium16.copyWith(
+          color: ColorsManager.textColor,
+        ),
+      ),
+      trailing:
+          trailing ??
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 14,
+            color: ColorsManager.textSecondaryColor.withValues(alpha: 0.5),
+          ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
     );
   }

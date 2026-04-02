@@ -4,37 +4,57 @@ import 'package:ripple/core/utils/cubit/theme/theme_cubit.dart';
 class ColorsManager {
   static bool get isDark => themeCubit.isDarkMode;
 
-  // -------- PRIMARY COLORS (Ripple Identity) -------- //
-  static const Color primary = Color(0xFF3C78FF); // Ripple Blue
-  static const Color secondary = Color(0xFF7B61FF); // Soft Violet
-  static const Color accent = Color(0xFF00D6C9); // Aqua / Teal highlight
+  // -------- BRAND COLORS (Material 3 Masterpiece) -------- //
+  static const Color primary = Color(0xFF3C78FF); // Ripple Vibrant Blue
+  static const Color secondary = Color(0xFF6366F1); // Indigo / Violet
+  static const Color tertiary = Color(0xFF0EA5E9); // Sky / Aqua
 
-  // -------- LIGHT THEME -------- //
-  static const Color lightBackground = Color(0xFFF7FAFF); // off-white blueish
-  static const Color lightCard = Colors.white;
-  static const Color lightTextPrimary = Color(0xFF101213);
-  static const Color lightTextSecondary = Color(0xFF6B7280);
+  // -------- LIGHT THEME (Clean & Crisp) -------- //
+  static const Color lightBackground = Color(
+    0xFFF8FAFC,
+  ); // Very light blueish gray
+  static const Color lightSurface = Colors.white;
+  static const Color lightSurfaceContainer = Color(
+    0xFFF1F5F9,
+  ); // Lighter gray for cards
+  static const Color lightTextPrimary = Color(
+    0xFF0F172A,
+  ); // Deep slate for text
+  static const Color lightTextSecondary = Color(
+    0xFF64748B,
+  ); // Cool gray for sub-text
+  static const Color lightOutline = Color(0xFFE2E8F0); // Subtle borders
 
-  // -------- DARK THEME -------- //
-  static const Color darkBackground = Color(0xFF0D0F14);
-  static const Color darkCard = Color(0xFF1A1C23);
-  static const Color darkTextPrimary = Color(0xFFF3F4F6);
-  static const Color darkTextSecondary = Color(0xFFA1A1AA);
+  // -------- DARK THEME (Deep & Elegant) -------- //
+  static const Color darkBackground = Color(0xFF020617); // Deepest Navy
+  static const Color darkSurface = Color(0xFF0F172A); // Surface Blue-Black
+  static const Color darkSurfaceContainer = Color(0xFF1E293B); // Card Slate
+  static const Color darkTextPrimary = Color(0xFFF8FAFC); // Off-white
+  static const Color darkTextSecondary = Color(0xFF94A3B8); // Muted Slate
+  static const Color darkOutline = Color(0xFF334155); // Dark Slate borders
 
-  // -------- SHARED -------- //
-  static const Color success = Color(0xFF4CAF50);
-  static const Color error = Color(0xFFE53935);
-  static const Color warning = Color(0xFFFFA000);
+  // -------- STATUS COLORS (M3 Semantic) -------- //
+  static const Color success = Color(0xFF10B981); // Emerald Green
+  static const Color error = Color(0xFFEF4444); // Rose Red
+  static const Color warning = Color(0xFFF59E0B); // Amber Orange
 
-  // -------- THEME COLORS -------- //
+  // -------- ADAPTIVE GETTERS (The Only Way To Access Colors) -------- //
+
   static Color get textColor => isDark ? darkTextPrimary : lightTextPrimary;
-
-  static Color get backgroundColor => isDark ? darkBackground : lightBackground;
-
-  static Color get cardColor => isDark ? darkCard : lightCard;
 
   static Color get textSecondaryColor =>
       isDark ? darkTextSecondary : lightTextSecondary;
+
+  static Color get backgroundColor => isDark ? darkBackground : lightBackground;
+
+  static Color get cardColor => isDark ? darkSurface : lightSurface;
+
+  static Color get surfaceContainer =>
+      isDark ? darkSurfaceContainer : lightSurfaceContainer;
+
+  static Color get outline => isDark ? darkOutline : lightOutline;
+
+  static Color get dividerColor => isDark ? darkOutline : lightOutline;
 
   static Color get iconColor => isDark ? darkTextPrimary : lightTextPrimary;
 

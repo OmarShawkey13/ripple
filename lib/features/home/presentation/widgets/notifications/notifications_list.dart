@@ -20,21 +20,21 @@ class NotificationsList extends StatelessWidget {
           loadingState:
               state is HomeGetNotificationsLoadingState &&
               notifications.isEmpty,
-          successBuilder: (context) => notifications.isEmpty
-              ? Center(
-                  child: Text(
-                    appTranslation().get('no_notifications'),
-                    style: TextStylesManager.regular16,
-                  ),
-                )
-              : ListView.builder(
-                  itemCount: notifications.length,
-                  itemBuilder: (context, index) {
-                    return NotificationItem(
-                      notification: notifications[index],
-                    );
-                  },
-                ),
+          emptyState: notifications.isEmpty,
+          emptyBuilder: (context) => Center(
+            child: Text(
+              appTranslation().get('no_notifications'),
+              style: TextStylesManager.regular16,
+            ),
+          ),
+          successBuilder: (context) => ListView.builder(
+            itemCount: notifications.length,
+            itemBuilder: (context, index) {
+              return NotificationItem(
+                notification: notifications[index],
+              );
+            },
+          ),
         );
       },
     );

@@ -45,10 +45,10 @@ class RegisterProfileImage extends StatelessWidget {
                   color: ColorsManager.primary,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.camera_alt,
                   size: 18,
-                  color: ColorsManager.lightCard,
+                  color: ColorsManager.cardColor,
                 ),
               ),
             ],

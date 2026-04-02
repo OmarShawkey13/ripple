@@ -24,20 +24,31 @@ class EditProfileCover extends StatelessWidget {
           height: height,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: ColorsManager.cardColor,
+            color: ColorsManager.surfaceContainer,
             image: _buildCoverImage(),
           ),
+          child: _buildCoverImage() == null
+              ? Center(
+                  child: Icon(
+                    Icons.add_photo_alternate_outlined,
+                    color: ColorsManager.primary.withValues(alpha: 0.3),
+                    size: 40,
+                  ),
+                )
+              : null,
         ),
-
-        // 📸 Camera button
+        if (_buildCoverImage() != null)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.2),
+            ),
+          ),
         PositionedDirectional(
-          bottom: 12,
-          end: 12,
+          bottom: 16,
+          end: 16,
           child: EditProfileCircleIconButton(
-            icon: Icons.camera_alt,
-            onTap: () {
-              cubit.pickCoverImage();
-            },
+            icon: Icons.camera_alt_rounded,
+            onTap: () => cubit.pickCoverImage(),
           ),
         ),
       ],
@@ -51,9 +62,9 @@ class EditProfileCover extends StatelessWidget {
         fit: BoxFit.cover,
       );
     }
-    if (user.coverUrl.isNotEmpty) {
+    if (user.coverUrl != null && user.coverUrl!.isNotEmpty) {
       return DecorationImage(
-        image: CachedNetworkImageProvider(user.coverUrl),
+        image: CachedNetworkImageProvider(user.coverUrl!),
         fit: BoxFit.cover,
       );
     }

@@ -11,21 +11,38 @@ class AddPostAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new),
+      backgroundColor: ColorsManager.backgroundColor,
+      elevation: 0,
+      leadingWidth: 80,
+      leading: TextButton(
         onPressed: () => context.pop,
+        child: Text(
+          appTranslation().get("cancel"),
+          style: TextStylesManager.regular14.copyWith(
+            color: ColorsManager.textSecondaryColor,
+          ),
+        ),
       ),
-      title: Text(appTranslation().get("add_post")),
-      centerTitle: true,
       actions: [
-        TextButton(
-          onPressed: () {
-            homeCubit.addPost(homeCubit.postTextController.text);
-          },
-          child: Text(
-            appTranslation().get("post"),
-            style: TextStylesManager.regular14.copyWith(
-              color: ColorsManager.primary,
+        Padding(
+          padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+          child: FilledButton(
+            onPressed: () {
+              if (homeCubit.postTextController.text.trim().isNotEmpty ||
+                  homeCubit.postImage != null) {
+                homeCubit.addPost(homeCubit.postTextController.text);
+              }
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: ColorsManager.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: Text(
+              appTranslation().get("post"),
+              style: TextStylesManager.bold14.copyWith(color: Colors.white),
             ),
           ),
         ),

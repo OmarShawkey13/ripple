@@ -35,8 +35,8 @@ class HomeCubit extends Cubit<HomeStates> {
   final UserRepository userRepo = UserRepository();
   StreamSubscription? _userSubscription;
 
-  //getDataUser
   UserModel? userModel;
+  UserModel? viewedUserModel;
 
   Future<void> cacheUser(UserModel? model) async {
     final json = jsonEncode(model!.toMap());
@@ -56,29 +56,27 @@ class HomeCubit extends Cubit<HomeStates> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    _userSubscription?.cancel(); // Cancel any existing subscription
+    _userSubscription?.cancel();
 
     _userSubscription = userRepo
         .getUserStream(uid)
         .listen(
           (user) async {
-            if (user == null) return; // Should not happen if user is logged in
+            if (user == null) return;
 
             final currentToken = await FirebaseMessaging.instance.getToken();
 
             if (user.fcmToken != currentToken) {
-              // Another device has logged in, log this one out
               logout(navigatorKey.currentContext!);
               return;
             }
 
             userModel = user;
             await cacheUser(user);
-            emit(HomeGetUserSuccessState());
+            emit(HomeGetCurrentUserSuccessState());
           },
           onError: (dynamic error) {
-            debugPrint("Error in user stream: $error");
-            emit(HomeGetUserErrorState(error.toString()));
+            emit(HomeGetCurrentUserErrorState(error.toString()));
           },
         );
   }
@@ -87,34 +85,57 @@ class HomeCubit extends Cubit<HomeStates> {
     final cached = getCachedUser();
     if (cached != null) {
       userModel = cached;
-      emit(HomeGetUserSuccessState());
+      emit(HomeGetCurrentUserSuccessState());
     }
     final uid = FirebaseAuth.instance.currentUser!.uid;
     try {
       final fresh = await userRepo.getUser(uid);
-
-      // Update FCM Token
       final token = await FirebaseMessaging.instance.getToken();
+
       if (token != null && fresh!.fcmToken != token) {
         final updatedUser = fresh.copyWith(fcmToken: token);
         await userRepo.updateUser(updatedUser);
         userModel = updatedUser;
-        await cacheUser(updatedUser);
       } else {
         userModel = fresh;
-        await cacheUser(fresh);
       }
 
-      emit(HomeGetUserSuccessState());
+      await cacheUser(userModel);
+      emit(HomeGetCurrentUserSuccessState());
     } catch (e) {
-      debugPrint("Error fetching user data: $e");
       if (cached == null) {
-        emit(HomeGetUserErrorState(e.toString()));
+        emit(HomeGetCurrentUserErrorState(e.toString()));
       }
     }
   }
 
-  // Posts
+  Future<void> getOtherUserData(String userId) async {
+    emit(HomeGetViewedUserLoadingState());
+    try {
+      final user = await userRepo.getUser(userId);
+      viewedUserModel = user;
+      emit(HomeGetViewedUserSuccessState());
+    } catch (e) {
+      emit(HomeGetViewedUserErrorState(e.toString()));
+    }
+  }
+
+  void initProfile(String? userId) {
+    if (userId != null && userId != viewedUserModel?.uid) {
+      viewedUserModel = null;
+      userPosts = [];
+      emit(HomeGetViewedUserLoadingState());
+    }
+
+    if (userId == null || userId == userModel?.uid) {
+      viewedUserModel = userModel;
+      getMyPosts();
+    } else {
+      getOtherUserData(userId);
+      getUserPosts(userId);
+    }
+  }
+
   final EmojiTextEditingController postTextController = .new();
   List<PostModel> posts = [];
   File? postImage;
@@ -154,10 +175,8 @@ class HomeCubit extends Cubit<HomeStates> {
         imageUrl: imageUrl,
       );
 
-      // Reset state after successful post
       postImage = null;
       postTextController.clear();
-
       emit(HomeAddPostSuccessState());
     } catch (e) {
       emit(HomeAddPostErrorState(e.toString()));
@@ -172,12 +191,7 @@ class HomeCubit extends Cubit<HomeStates> {
     );
     final request = http.MultipartRequest('POST', uri)
       ..fields['upload_preset'] = uploadPreset
-      ..files.add(
-        await http.MultipartFile.fromPath(
-          'file',
-          imageFile.path,
-        ),
-      );
+      ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
     final response = await request.send();
     final res = await http.Response.fromStream(response);
     if (res.statusCode == 200) {
@@ -189,14 +203,14 @@ class HomeCubit extends Cubit<HomeStates> {
   }
 
   void getPosts() {
-    emit(HomeGetPostsLoadingState());
+    emit(HomeGetFeedPostsLoadingState());
     try {
       postRepo.getPosts().listen((posts) {
         this.posts = posts;
-        emit(HomeGetPostsSuccessState(posts));
+        emit(HomeGetFeedPostsSuccessState(posts));
       });
     } catch (e) {
-      emit(HomeGetPostsErrorState(e.toString()));
+      emit(HomeGetFeedPostsErrorState(e.toString()));
     }
   }
 
@@ -218,10 +232,7 @@ class HomeCubit extends Cubit<HomeStates> {
         await NotificationService.send(
           receiverId: post.userId,
           title: userModel!.username!,
-          contents: {
-            "en": "liked your post ❤️",
-            "ar": "أعجب بمنشورك ❤️",
-          },
+          contents: {"en": "liked your post ❤️", "ar": "أعجب بمنشورك ❤️"},
           data: {
             "type": "like",
             "postId": post.postId,
@@ -291,6 +302,54 @@ class HomeCubit extends Cubit<HomeStates> {
     }
   }
 
+  Future<void> addReply({
+    required String postId,
+    required String commentId,
+    required String commentOwnerId,
+    required String text,
+  }) async {
+    if (userModel == null) return;
+    emit(HomeAddCommentLoadingState());
+    try {
+      await postRepo.addReply(
+        postId: postId,
+        commentId: commentId,
+        userId: userModel!.uid!,
+        username: userModel!.username!,
+        userProfilePic: userModel!.photoUrl!,
+        text: text,
+      );
+
+      if (commentOwnerId != userModel!.uid) {
+        await NotificationService.send(
+          receiverId: commentOwnerId,
+          title: userModel!.username!,
+          contents: {
+            "en": "replied to your comment 💬",
+            "ar": "رد على تعليقك 💬",
+          },
+          data: {
+            "type": "comment",
+            "postId": postId,
+            "senderId": userModel!.uid!,
+          },
+        );
+        await notificationRepo.sendNotification(
+          senderId: userModel!.uid!,
+          senderName: userModel!.username!,
+          senderProfilePic: userModel!.photoUrl!,
+          receiverId: commentOwnerId,
+          type: 'comment',
+          postId: postId,
+          text: 'replied to your comment: $text',
+        );
+      }
+      emit(HomeAddCommentSuccessState());
+    } catch (e) {
+      emit(HomeAddCommentErrorState(e.toString()));
+    }
+  }
+
   Future<void> deleteComment(String postId, CommentModel comment) async {
     emit(HomeDeleteCommentLoadingState());
     try {
@@ -309,14 +368,8 @@ class HomeCubit extends Cubit<HomeStates> {
       await NotificationService.send(
         receiverId: userIdToFollow,
         title: userModel!.username!,
-        contents: {
-          "en": "started following you 👤",
-          "ar": "بدأ بمتابعتك 👤",
-        },
-        data: {
-          "type": "follow",
-          "senderId": userModel!.uid!,
-        },
+        contents: {"en": "started following you 👤", "ar": "بدأ بمتابعتك 👤"},
+        data: {"type": "follow", "senderId": userModel!.uid!},
       );
       await notificationRepo.sendNotification(
         senderId: userModel!.uid!,
@@ -357,7 +410,7 @@ class HomeCubit extends Cubit<HomeStates> {
   }
 
   void logout(BuildContext context) {
-    _userSubscription?.cancel(); // Cancel subscription before logging out
+    _userSubscription?.cancel();
     FirebaseAuth.instance.signOut().then((value) {
       if (context.mounted) {
         context.pushReplacement<Object>(Routes.login);
@@ -365,25 +418,34 @@ class HomeCubit extends Cubit<HomeStates> {
     });
   }
 
-  //profile
   List<PostModel> userPosts = [];
 
   void getMyPosts() {
-    emit(HomeGetMyPostsLoadingState());
+    emit(HomeGetProfilePostsLoadingState());
     try {
       postRepo.getUserPosts(userModel!.uid!).listen((posts) {
         userPosts = posts;
-        emit(HomeGetMyPostsSuccessState(posts));
+        emit(HomeGetProfilePostsSuccessState(posts));
       });
     } catch (e) {
-      emit(HomeGetMyPostsErrorState(e.toString()));
+      emit(HomeGetProfilePostsErrorState(e.toString()));
     }
   }
 
-  //editProile
+  void getUserPosts(String userId) {
+    emit(HomeGetProfilePostsLoadingState());
+    try {
+      postRepo.getUserPosts(userId).listen((posts) {
+        userPosts = posts;
+        emit(HomeGetProfilePostsSuccessState(posts));
+      });
+    } catch (e) {
+      emit(HomeGetProfilePostsErrorState(e.toString()));
+    }
+  }
+
   File? profileImage;
   File? coverImage;
-
   final TextEditingController usernameController = .new();
   final TextEditingController bioController = .new();
 
@@ -407,20 +469,14 @@ class HomeCubit extends Cubit<HomeStates> {
 
   Future<void> updateProfile() async {
     if (userModel == null) return;
-
     emit(HomeUpdateProfileLoadingState());
-
     try {
       String profileUrl = userModel!.photoUrl!;
       String coverUrl = userModel!.coverUrl!;
-
-      if (profileImage != null) {
+      if (profileImage != null)
         profileUrl = await uploadImageToCloudinary(profileImage!);
-      }
-
-      if (coverImage != null) {
+      if (coverImage != null)
         coverUrl = await uploadImageToCloudinary(coverImage!);
-      }
 
       final updatedUser = userModel!.copyWith(
         username: usernameController.text.trim(),
@@ -436,17 +492,14 @@ class HomeCubit extends Cubit<HomeStates> {
         userProfilePic: updatedUser.photoUrl!,
       );
       userModel = updatedUser;
-
       profileImage = null;
       coverImage = null;
-
       emit(HomeUpdateProfileSuccessState());
     } catch (e) {
       emit(HomeUpdateProfileErrorState(e.toString()));
     }
   }
 
-  //editPost
   final EmojiTextEditingController editPostController = .new();
   File? editPostImage;
   String? editPostImageUrl;
@@ -457,9 +510,7 @@ class HomeCubit extends Cubit<HomeStates> {
     editPostImageUrl = post.imageUrl;
   }
 
-  Future<void> updatePost({
-    required String postId,
-  }) async {
+  Future<void> updatePost({required String postId}) async {
     emit(HomeUpdatePostLoadingState());
     try {
       String? imageUrl;
@@ -493,8 +544,8 @@ class HomeCubit extends Cubit<HomeStates> {
   }
 
   void removeEditPostImage() {
-    homeCubit.editPostImage = null;
-    homeCubit.editPostImageUrl = null;
+    editPostImage = null;
+    editPostImageUrl = null;
     emit(HomeRemoveEditPostImageState());
   }
 

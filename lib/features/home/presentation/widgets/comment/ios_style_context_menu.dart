@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:ripple/core/utils/constants/constants.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
 import 'package:ripple/features/home/data/model/context_menu.dart';
@@ -225,7 +226,7 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
                                   leading: const Icon(
                                     Icons.arrow_back_ios_new_outlined,
                                   ),
-                                  title: const Text("Back"),
+                                  title: Text(appTranslation().get('back')),
                                   onTap: closeSubMenu,
                                 ),
                               ...List.generate(currentMenu.length, (index) {

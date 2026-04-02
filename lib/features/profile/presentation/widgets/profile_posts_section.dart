@@ -3,7 +3,6 @@ import 'package:ripple/core/models/post_model.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/theme/text_styles.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
-import 'package:ripple/core/utils/constants/primary/conditional_builder.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
 import 'package:ripple/features/home/presentation/widgets/post_card.dart';
 
@@ -17,44 +16,73 @@ class ProfilePostsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Text(
-              appTranslation().get('posts'),
-              style: TextStylesManager.bold18,
+    if (posts.isEmpty) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.post_add_rounded,
+                size: 64,
+                color: ColorsManager.textSecondaryColor.withValues(alpha: 0.2),
+              ),
+              verticalSpace16,
+              Text(
+                appTranslation().get('no_posts_yet'),
+                style: TextStylesManager.regular16.copyWith(
+                  color: ColorsManager.textSecondaryColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SliverMainAxisGroup(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: ColorsManager.primary,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                horizontalSpace12,
+                Text(
+                  appTranslation().get('posts'),
+                  style: TextStylesManager.bold18.copyWith(
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${posts.length}',
+                  style: TextStylesManager.medium14.copyWith(
+                    color: ColorsManager.textSecondaryColor,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-        verticalSpace8,
-        ConditionalBuilder(
-          loadingState: false,
-          emptyState: posts.isEmpty,
-          emptyBuilder: (context) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 32),
-            child: Text(
-              appTranslation().get('no_posts_yet'),
-              style: TextStylesManager.regular16.copyWith(
-                color: ColorsManager.textSecondaryColor,
-              ),
-            ),
-          ),
-          successBuilder: (context) => ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: posts.length,
-            itemBuilder: (context, index) {
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
               return Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
+                padding: const EdgeInsets.only(bottom: 8),
                 child: PostCard(post: posts[index]),
               );
             },
+            childCount: posts.length,
           ),
         ),
       ],

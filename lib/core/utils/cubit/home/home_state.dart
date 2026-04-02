@@ -5,61 +5,81 @@ abstract class HomeStates {}
 
 class HomeInitialState extends HomeStates {}
 
-//getUserData
-class HomeGetUserSuccessState extends HomeStates {}
+// Current User States (Me)
+class HomeGetCurrentUserLoadingState extends HomeStates {}
 
-class HomeGetUserErrorState extends HomeStates {
+class HomeGetCurrentUserSuccessState extends HomeStates {}
+
+class HomeGetCurrentUserErrorState extends HomeStates {
   final String error;
-
-  HomeGetUserErrorState(this.error);
+  HomeGetCurrentUserErrorState(this.error);
 }
 
-// Posts
-class HomeGetPostsLoadingState extends HomeStates {}
+// Viewed User States (Others/Profile)
+class HomeGetViewedUserLoadingState extends HomeStates {}
 
-class HomeGetPostsSuccessState extends HomeStates {
-  final List<PostModel> posts;
+class HomeGetViewedUserSuccessState extends HomeStates {}
 
-  HomeGetPostsSuccessState(this.posts);
-}
-
-class HomeGetPostsErrorState extends HomeStates {
+class HomeGetViewedUserErrorState extends HomeStates {
   final String error;
-
-  HomeGetPostsErrorState(this.error);
+  HomeGetViewedUserErrorState(this.error);
 }
 
+// Post Creation States
 class HomeAddPostLoadingState extends HomeStates {}
 
 class HomeAddPostSuccessState extends HomeStates {}
 
 class HomeAddPostErrorState extends HomeStates {
   final String error;
-
   HomeAddPostErrorState(this.error);
 }
 
-class HomeRemovePostImageState extends HomeStates {}
-
 class HomePickPostImageState extends HomeStates {}
 
-// Like Post
+class HomeRemovePostImageState extends HomeStates {}
+
+// Feed Posts States
+class HomeGetFeedPostsLoadingState extends HomeStates {}
+
+class HomeGetFeedPostsSuccessState extends HomeStates {
+  final List<PostModel> posts;
+  HomeGetFeedPostsSuccessState(this.posts);
+}
+
+class HomeGetFeedPostsErrorState extends HomeStates {
+  final String error;
+  HomeGetFeedPostsErrorState(this.error);
+}
+
+// Profile Posts States
+class HomeGetProfilePostsLoadingState extends HomeStates {}
+
+class HomeGetProfilePostsSuccessState extends HomeStates {
+  final List<PostModel> posts;
+  HomeGetProfilePostsSuccessState(this.posts);
+}
+
+class HomeGetProfilePostsErrorState extends HomeStates {
+  final String error;
+  HomeGetProfilePostsErrorState(this.error);
+}
+
+// Interaction States
 class HomeLikePostSuccessState extends HomeStates {}
 
 class HomeLikePostErrorState extends HomeStates {
   final String error;
-
   HomeLikePostErrorState(this.error);
 }
 
-// Comments
+// Comment States
 class HomeAddCommentLoadingState extends HomeStates {}
 
 class HomeAddCommentSuccessState extends HomeStates {}
 
 class HomeAddCommentErrorState extends HomeStates {
   final String error;
-
   HomeAddCommentErrorState(this.error);
 }
 
@@ -69,65 +89,16 @@ class HomeDeleteCommentSuccessState extends HomeStates {}
 
 class HomeDeleteCommentErrorState extends HomeStates {
   final String error;
-
   HomeDeleteCommentErrorState(this.error);
 }
 
-//myPosts
-class HomeGetMyPostsLoadingState extends HomeStates {}
-
-class HomeGetMyPostsSuccessState extends HomeStates {
-  final List<PostModel> posts;
-
-  HomeGetMyPostsSuccessState(this.posts);
-}
-
-class HomeGetMyPostsErrorState extends HomeStates {
-  final String error;
-
-  HomeGetMyPostsErrorState(this.error);
-}
-
-// Edit Profile
-class HomePickProfileImageState extends HomeStates {}
-
-class HomePickCoverImageState extends HomeStates {}
-
-class HomeUpdateProfileLoadingState extends HomeStates {}
-
-class HomeUpdateProfileSuccessState extends HomeStates {}
-
-class HomeUpdateProfileErrorState extends HomeStates {
-  final String error;
-
-  HomeUpdateProfileErrorState(this.error);
-}
-
-class HomeCoverImagePickedState extends HomeStates {}
-
-class HomeProfileImagePickedState extends HomeStates {}
-
-// Edit Post
-class HomeRemoveEditPostImageState extends HomeStates {}
-
-class HomeUpdatePostLoadingState extends HomeStates {}
-
-class HomeUpdatePostSuccessState extends HomeStates {}
-
-class HomeUpdatePostErrorState extends HomeStates {
-  final String error;
-
-  HomeUpdatePostErrorState(this.error);
-}
-
-// Follow
+// Follow/Unfollow States
 class HomeFollowUserLoadingState extends HomeStates {}
 
 class HomeFollowUserSuccessState extends HomeStates {}
 
 class HomeFollowUserErrorState extends HomeStates {
   final String error;
-
   HomeFollowUserErrorState(this.error);
 }
 
@@ -137,32 +108,53 @@ class HomeUnfollowUserSuccessState extends HomeStates {}
 
 class HomeUnfollowUserErrorState extends HomeStates {
   final String error;
-
   HomeUnfollowUserErrorState(this.error);
 }
 
-// Delete Post
+// Post Management States
 class HomeDeletePostLoadingState extends HomeStates {}
 
 class HomeDeletePostSuccessState extends HomeStates {}
 
 class HomeDeletePostErrorState extends HomeStates {
   final String error;
-
   HomeDeletePostErrorState(this.error);
 }
 
-// Notifications
+class HomeUpdatePostLoadingState extends HomeStates {}
+
+class HomeUpdatePostSuccessState extends HomeStates {}
+
+class HomeUpdatePostErrorState extends HomeStates {
+  final String error;
+  HomeUpdatePostErrorState(this.error);
+}
+
+class HomeRemoveEditPostImageState extends HomeStates {}
+
+// Profile Update States
+class HomeProfileImagePickedState extends HomeStates {}
+
+class HomeCoverImagePickedState extends HomeStates {}
+
+class HomeUpdateProfileLoadingState extends HomeStates {}
+
+class HomeUpdateProfileSuccessState extends HomeStates {}
+
+class HomeUpdateProfileErrorState extends HomeStates {
+  final String error;
+  HomeUpdateProfileErrorState(this.error);
+}
+
+// Notification States
 class HomeGetNotificationsLoadingState extends HomeStates {}
 
 class HomeGetNotificationsSuccessState extends HomeStates {
   final List<NotificationModel> notifications;
-
   HomeGetNotificationsSuccessState(this.notifications);
 }
 
 class HomeGetNotificationsErrorState extends HomeStates {
   final String error;
-
   HomeGetNotificationsErrorState(this.error);
 }
