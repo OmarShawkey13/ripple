@@ -1,34 +1,134 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:googleapis_auth/auth_io.dart' as auth;
 import 'package:http/http.dart' as http;
 import 'package:ripple/core/models/post_model.dart';
 import 'package:ripple/core/models/user_model.dart';
 import 'package:ripple/core/utils/constants/routes.dart';
+import 'package:ripple/core/utils/extensions/context_extension.dart';
+import 'package:ripple/main.dart';
 
 class NotificationService {
   static const String _projectId = 'ripple-bdb2b';
+  static String? _cachedAccessToken;
+  static DateTime? _tokenExpiry;
+
+  static final FlutterLocalNotificationsPlugin localNotifications =
+      FlutterLocalNotificationsPlugin();
+
+  // Initialize Local Notifications
+  static Future<void> initLocalNotifications() async {
+    const AndroidInitializationSettings androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const DarwinInitializationSettings iosSettings =
+        DarwinInitializationSettings(
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
+        );
+
+    const InitializationSettings settings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
+
+    await localNotifications.initialize(
+      settings: settings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        if (response.payload != null) {
+          final Map<String, dynamic> data = jsonDecode(response.payload!);
+          log("Local notification clicked with payload: $data");
+          if (navigatorKey.currentContext != null) {
+            handleNotification(navigatorKey.currentContext!, data);
+          }
+        }
+      },
+    );
+
+    if (Platform.isAndroid) {
+      await localNotifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.createNotificationChannel(
+            const AndroidNotificationChannel(
+              'high_importance_channel',
+              'High Importance Notifications',
+              description: 'This channel is used for important notifications.',
+              importance: Importance.max,
+              playSound: true,
+            ),
+          );
+    }
+  }
+
+  // Show local notification when app is in foreground
+  static Future<void> showLocalNotification(RemoteMessage message) async {
+    final notification = message.notification;
+    if (notification == null) return;
+
+    await localNotifications.show(
+      id: notification.hashCode,
+      title: notification.title,
+      body: notification.body,
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'high_importance_channel',
+          'High Importance Notifications',
+          channelDescription:
+              'This channel is used for important notifications.',
+          importance: Importance.max,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+          playSound: true,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      payload: jsonEncode(message.data),
+    );
+  }
 
   static Future<String> getAccessToken() async {
-    final jsonString = await rootBundle.loadString(
-      'assets/firebase/ripple-bdb2b-a82900c2a752.json',
-    );
+    if (_cachedAccessToken != null &&
+        _tokenExpiry != null &&
+        _tokenExpiry!.isAfter(DateTime.now().add(const Duration(minutes: 5)))) {
+      return _cachedAccessToken!;
+    }
 
-    final accountCredentials = auth.ServiceAccountCredentials.fromJson(
-      jsonString,
-    );
+    try {
+      final jsonString = await rootBundle.loadString(
+        'assets/firebase/ripple-bdb2b-a82900c2a752.json',
+      );
 
-    final scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
-    final client = await auth.clientViaServiceAccount(
-      accountCredentials,
-      scopes,
-    );
+      final accountCredentials = auth.ServiceAccountCredentials.fromJson(
+        jsonString,
+      );
+      final scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
 
-    return client.credentials.accessToken.data;
+      final client = await auth.clientViaServiceAccount(
+        accountCredentials,
+        scopes,
+      );
+
+      _cachedAccessToken = client.credentials.accessToken.data;
+      _tokenExpiry = client.credentials.accessToken.expiry;
+
+      return _cachedAccessToken!;
+    } catch (e) {
+      log('Error getting FCM access token: $e');
+      rethrow;
+    }
   }
 
   static Future<void> sendNotification({
@@ -37,6 +137,8 @@ class NotificationService {
     required String body,
     required Map<String, String> data,
   }) async {
+    if (token.isEmpty) return;
+
     try {
       final String accessToken = await getAccessToken();
       const String fcmUrl =
@@ -57,28 +159,30 @@ class NotificationService {
             },
             'data': data,
             'android': {
+              'priority': 'high',
               'notification': {
-                "sound": "custom_sound",
+                'sound': 'default',
                 'click_action': 'FLUTTER_NOTIFICATION_CLICK',
                 'channel_id': 'high_importance_channel',
               },
             },
             'apns': {
               'payload': {
-                'aps': {"sound": "custom_sound.caf", 'content-available': 1},
+                'aps': {
+                  'sound': 'default',
+                  'content-available': 1,
+                },
               },
             },
           },
         }),
       );
 
-      if (response.statusCode == 200) {
-        log('Notification sent successfully');
-      } else {
-        log('Failed to send notification: ${response.body}');
+      if (response.statusCode != 200) {
+        log('FCM Error: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
-      log('Error sending notification: $e');
+      log('Notification push failed: $e');
     }
   }
 
@@ -93,17 +197,13 @@ class NotificationService {
           .collection('users')
           .doc(receiverId)
           .get();
-
       if (!userDoc.exists) return;
 
       final user = UserModel.fromMap(userDoc.data()!, receiverId);
       final token = user.fcmToken;
 
       if (token != null && token.isNotEmpty) {
-        // Use English content by default, or the first available
         final body = contents['en'] ?? contents.values.first;
-
-        // Convert data values to String as FCM data expects Map<String, String>
         final stringData = data.map(
           (key, value) => MapEntry(key, value.toString()),
         );
@@ -116,7 +216,7 @@ class NotificationService {
         );
       }
     } catch (e) {
-      log("Error fetching user for notification: $e");
+      log("Notification preparation error: $e");
     }
   }
 
@@ -124,48 +224,31 @@ class NotificationService {
     BuildContext context,
     Map<String, dynamic> data,
   ) async {
-    log("Handling notification with data: $data");
-
     final String? type = data['type'];
     final String? postId = data['postId'];
     final String? senderId = data['senderId'];
 
-    if (type == 'comment' || type == 'like') {
-      if (postId != null) {
-        try {
-          // Fetch PostModel to navigate to CommentsScreen
-          final doc = await FirebaseFirestore.instance
-              .collection('posts')
-              .doc(postId)
-              .get();
-          if (doc.exists) {
-            final post = PostModel.fromMap(doc.data()!, doc.id);
-            if (context.mounted) {
-              Navigator.pushNamed(context, Routes.comments, arguments: post);
-            }
-          }
-        } catch (e) {
-          log("Error fetching post for notification: $e");
-        }
+    if (!context.mounted) return;
+    if (type == 'like' && postId != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(postId)
+          .get();
+      if (doc.exists && context.mounted) {
+        final post = PostModel.fromMap(doc.data()!, doc.id);
+        context.push<PostModel>(Routes.postDetails, arguments: post);
       }
-    } else if (type == 'follow') {
-      if (senderId != null) {
-        try {
-          // Fetch UserModel to navigate to ProfileScreen
-          final doc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(senderId)
-              .get();
-          if (doc.exists) {
-            final user = UserModel.fromMap(doc.data()!, doc.id);
-            if (context.mounted) {
-              Navigator.pushNamed(context, Routes.profile, arguments: user);
-            }
-          }
-        } catch (e) {
-          log("Error fetching user for notification: $e");
-        }
+    } else if (type == 'comment' && postId != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(postId)
+          .get();
+      if (doc.exists && context.mounted) {
+        final post = PostModel.fromMap(doc.data()!, doc.id);
+        context.push<PostModel>(Routes.comments, arguments: post);
       }
+    } else if (type == 'follow' && senderId != null) {
+      context.push<String>(Routes.profile, arguments: senderId);
     }
   }
 }

@@ -6,8 +6,10 @@ import 'package:ripple/features/home/presentation/screen/home_screen.dart';
 import 'package:ripple/features/home/presentation/widgets/add_post_screen.dart';
 import 'package:ripple/features/home/presentation/widgets/edit_post_screen.dart';
 import 'package:ripple/features/home/presentation/widgets/notifications_screen.dart';
+import 'package:ripple/features/home/presentation/screen/post_details_screen.dart';
 import 'package:ripple/features/login/presentation/screen/login_screen.dart';
 import 'package:ripple/features/on_boarding/presentation/screen/on_boarding_screen.dart';
+import 'package:ripple/features/profile/presentation/widgets/follow_list_screen.dart';
 import 'package:ripple/features/profile/presentation/screen/profile_screen.dart';
 import 'package:ripple/features/profile/presentation/widgets/edit_profile_screen.dart';
 import 'package:ripple/features/register/presentation/screen/register_screen.dart';
@@ -25,6 +27,8 @@ class Routes {
   static const String editPost = "/edit_post";
   static const String comments = "/comments";
   static const String notifications = "/notifications";
+  static const String postDetails = "/post_details";
+  static const String followList = "/follow_list";
 
   static Map<String, WidgetBuilder> get routes => {
     entry: (context) => const EntryScreen(),
@@ -39,5 +43,7 @@ class Routes {
     editPost: (context) => const EditPostScreen(),
     comments: (context) => const CommentsScreen(),
     notifications: (context) => const NotificationsScreen(),
+    postDetails: (context) => const PostDetailsScreen(),
+    followList: (context) => const FollowListScreen(),
   };
 }

@@ -15,21 +15,17 @@ import 'package:ripple/features/home/presentation/widgets/add_post/user_header.d
 class AddPostScreen extends StatelessWidget {
   const AddPostScreen({super.key});
 
-  // Note: Emoji visibility and focus should ideally be in Cubit or local ValueNotifier
-  // For now, we will keep them as local variables if the user prefers, but following the Rule of StatelessWidget.
-
   @override
   Widget build(BuildContext context) {
-    final ValueNotifier<bool> isEmojiVisible = ValueNotifier<bool>(false);
     final FocusNode inputFocusNode = FocusNode();
-
     return BlocConsumer<HomeCubit, HomeStates>(
       buildWhen: (previous, current) =>
           current is HomeAddPostLoadingState ||
           current is HomeAddPostSuccessState ||
           current is HomeAddPostErrorState ||
           current is HomePickPostImageState ||
-          current is HomeRemovePostImageState,
+          current is HomeRemovePostImageState ||
+          current is HomeToggleEmojiPickerState,
       listener: (context, state) {
         if (state is HomeAddPostSuccessState) {
           context.pop;
@@ -44,48 +40,41 @@ class AddPostScreen extends StatelessWidget {
       builder: (context, state) {
         return Scaffold(
           appBar: const AddPostAppBar(),
-          body: ValueListenableBuilder<bool>(
-            valueListenable: isEmojiVisible,
-            builder: (context, emojiVisible, _) {
-              return Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          ConditionalBuilder(
-                            loadingState: state is HomeAddPostLoadingState,
-                            successBuilder: (context) =>
-                                const SizedBox.shrink(),
-                            loadingBuilder: (context) => Column(
-                              children: [
-                                const LinearProgressIndicator(),
-                                verticalSpace12,
-                              ],
-                            ),
-                          ),
-                          const UserHeader(),
-                          const PostTextField(),
-                          const PostImagePreview(),
-                        ],
+          body: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      ConditionalBuilder(
+                        loadingState: state is HomeAddPostLoadingState,
+                        successBuilder: (context) => const SizedBox.shrink(),
+                        loadingBuilder: (context) => Column(
+                          children: [
+                            const LinearProgressIndicator(),
+                            verticalSpace12,
+                          ],
+                        ),
                       ),
-                    ),
+                      const UserHeader(),
+                      const PostTextField(),
+                      const PostImagePreview(),
+                    ],
                   ),
-                  const Divider(height: 1),
-                  AddPostActions(
-                    isEmojiVisible: emojiVisible,
-                    focusNode: inputFocusNode,
-                    onEmojiToggle: () =>
-                        isEmojiVisible.value = !isEmojiVisible.value,
-                  ),
-                  EmojiPickerContainer(
-                    isVisible: emojiVisible,
-                    controller: homeCubit.postTextController,
-                  ),
-                ],
-              );
-            },
+                ),
+              ),
+              const Divider(height: 1),
+              AddPostActions(
+                isEmojiVisible: homeCubit.isEmojiVisible,
+                focusNode: inputFocusNode,
+                onEmojiToggle: homeCubit.toggleEmojiPicker,
+              ),
+              EmojiPickerContainer(
+                isVisible: homeCubit.isEmojiVisible,
+                controller: homeCubit.postTextController,
+              ),
+            ],
           ),
         );
       },

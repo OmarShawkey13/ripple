@@ -139,6 +139,12 @@ class HomeCubit extends Cubit<HomeStates> {
   final EmojiTextEditingController postTextController = .new();
   List<PostModel> posts = [];
   File? postImage;
+  bool isEmojiVisible = false;
+
+  void toggleEmojiPicker() {
+    isEmojiVisible = !isEmojiVisible;
+    emit(HomeToggleEmojiPickerState());
+  }
 
   Future<void> pickPostImage() async {
     final picker = ImagePicker();
@@ -177,6 +183,7 @@ class HomeCubit extends Cubit<HomeStates> {
 
       postImage = null;
       postTextController.clear();
+      isEmojiVisible = false;
       emit(HomeAddPostSuccessState());
     } catch (e) {
       emit(HomeAddPostErrorState(e.toString()));
@@ -473,11 +480,12 @@ class HomeCubit extends Cubit<HomeStates> {
     try {
       String profileUrl = userModel!.photoUrl!;
       String coverUrl = userModel!.coverUrl!;
-      if (profileImage != null)
+      if (profileImage != null) {
         profileUrl = await uploadImageToCloudinary(profileImage!);
-      if (coverImage != null)
+      }
+      if (coverImage != null) {
         coverUrl = await uploadImageToCloudinary(coverImage!);
-
+      }
       final updatedUser = userModel!.copyWith(
         username: usernameController.text.trim(),
         bio: bioController.text.trim(),
@@ -508,6 +516,7 @@ class HomeCubit extends Cubit<HomeStates> {
     editPostController.text = post.text ?? '';
     editPostImage = null;
     editPostImageUrl = post.imageUrl;
+    emit(HomeInitEditPostState());
   }
 
   Future<void> updatePost({required String postId}) async {

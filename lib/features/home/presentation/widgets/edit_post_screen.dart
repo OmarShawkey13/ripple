@@ -10,6 +10,7 @@ import 'package:ripple/core/utils/constants/spacing.dart';
 import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 import 'package:ripple/core/utils/cubit/home/home_state.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
+import 'package:ripple/features/home/presentation/widgets/add_post/add_post_actions.dart';
 
 class EditPostScreen extends StatefulWidget {
   const EditPostScreen({super.key});
@@ -19,12 +20,6 @@ class EditPostScreen extends StatefulWidget {
 }
 
 class _EditPostScreenState extends State<EditPostScreen> {
-  bool isEmojiVisible = false;
-
-  void toggleEmojiPicker() {
-    setState(() => isEmojiVisible = !isEmojiVisible);
-  }
-
   final FocusNode inputFocusNode = FocusNode();
   late String arg;
 
@@ -47,7 +42,9 @@ class _EditPostScreenState extends State<EditPostScreen> {
           current is HomeUpdatePostSuccessState ||
           current is HomeUpdatePostErrorState ||
           current is HomeRemoveEditPostImageState ||
-          current is HomeAddPostLoadingState,
+          current is HomeAddPostLoadingState ||
+          current is HomeToggleEmojiPickerState ||
+          current is HomeInitEditPostState,
       listener: (context, state) {
         if (state is HomeUpdatePostSuccessState) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -164,45 +161,20 @@ class _EditPostScreenState extends State<EditPostScreen> {
                   ),
                 ),
                 const Divider(height: 1),
-                _buildToolbar(context),
+                AddPostActions(
+                  isEmojiVisible: homeCubit.isEmojiVisible,
+                  focusNode: inputFocusNode,
+                  onEmojiToggle: homeCubit.toggleEmojiPicker,
+                ),
                 EmojiPickerContainer(
-                  isVisible: isEmojiVisible,
-                  controller: homeCubit.editPostController,
+                  isVisible: homeCubit.isEmojiVisible,
+                  controller: homeCubit.postTextController,
                 ),
               ],
             ),
           ),
         );
       },
-    );
-  }
-
-  Widget _buildToolbar(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.photo_library),
-            onPressed: () => homeCubit.pickPostImage(),
-            color: ColorsManager.primary,
-          ),
-          IconButton(
-            icon: Icon(
-              isEmojiVisible ? Icons.keyboard : Icons.emoji_emotions_outlined,
-            ),
-            onPressed: () {
-              toggleEmojiPicker();
-              if (isEmojiVisible) {
-                inputFocusNode.unfocus();
-              } else {
-                FocusScope.of(context).requestFocus(inputFocusNode);
-              }
-            },
-            color: ColorsManager.primary,
-          ),
-        ],
-      ),
     );
   }
 }

@@ -39,6 +39,8 @@ class HomePickPostImageState extends HomeStates {}
 
 class HomeRemovePostImageState extends HomeStates {}
 
+class HomeToggleEmojiPickerState extends HomeStates {}
+
 // Feed Posts States
 class HomeGetFeedPostsLoadingState extends HomeStates {}
 
@@ -158,3 +160,5 @@ class HomeGetNotificationsErrorState extends HomeStates {
   final String error;
   HomeGetNotificationsErrorState(this.error);
 }
+
+class HomeInitEditPostState extends HomeStates {}

@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ripple/core/di/injections.dart';
 import 'package:ripple/core/network/local/cache_helper.dart';
 import 'package:ripple/core/network/service/notification_handler.dart';
+import 'package:ripple/core/network/service/notification_service.dart';
 import 'package:ripple/core/theme/theme.dart';
 import 'package:ripple/core/utils/constants/my_bloc_observer.dart';
 import 'package:ripple/core/utils/constants/routes.dart';
@@ -23,14 +24,20 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  NotificationHandler.initFirebaseMessaging();
+
+  // Initialize Notification Services
+  await NotificationService.initLocalNotifications();
+  await NotificationHandler.initFirebaseMessaging();
+
   FirebaseMessaging.onBackgroundMessage(NotificationHandler.messageHandler);
+
   Bloc.observer = MyBlocObserver();
   final bool isDark = CacheHelper.getData(key: 'isDark') ?? false;
   final bool isArabic = CacheHelper.getData(key: 'isArabicLang') ?? false;
   final String translation = await rootBundle.loadString(
     'assets/translations/${isArabic ? 'ar' : 'en'}.json',
   );
+
   runApp(
     MyApp(
       isDark: isDark,

@@ -3,6 +3,7 @@ import 'package:ripple/core/network/local/cache_helper.dart';
 import 'package:ripple/core/utils/constants/assets_helper.dart';
 import 'package:ripple/core/utils/constants/constants.dart';
 import 'package:ripple/core/utils/constants/routes.dart';
+import 'package:ripple/core/utils/extensions/context_extension.dart';
 import 'package:ripple/features/on_boarding/data/models/onboarding_item.dart';
 import 'package:ripple/features/on_boarding/presentation/widgets/onboarding_footer.dart';
 import 'package:ripple/features/on_boarding/presentation/widgets/onboarding_indicator.dart';
@@ -42,7 +43,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
   Future<void> finish() async {
     await CacheHelper.saveData(key: 'onBoarding', value: true);
     if (!mounted) return;
-    Navigator.pushReplacementNamed(context, Routes.login);
+    context.pushReplacement<Object>(Routes.login);
   }
 
   @override
