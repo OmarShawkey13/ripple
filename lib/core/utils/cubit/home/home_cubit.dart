@@ -17,6 +17,7 @@ import 'package:ripple/core/network/post_repository.dart';
 import 'package:ripple/core/network/service/notification_service.dart';
 import 'package:ripple/core/network/user_repository.dart';
 import 'package:ripple/core/theme/emoji_controller.dart';
+import 'package:ripple/core/utils/constants/constants.dart';
 import 'package:ripple/core/utils/constants/routes.dart';
 import 'package:ripple/core/utils/cubit/home/home_state.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
@@ -33,196 +34,159 @@ class HomeCubit extends Cubit<HomeStates> {
   final PostRepository postRepo = PostRepository();
   final NotificationRepository notificationRepo = NotificationRepository();
   final UserRepository userRepo = UserRepository();
-  StreamSubscription? _userSubscription;
 
+  StreamSubscription? _userSubscription;
+  StreamSubscription? _postsSubscription;
+  StreamSubscription? _userPostsSubscription;
+  StreamSubscription? _notificationsSubscription;
   UserModel? userModel;
   UserModel? viewedUserModel;
 
-  Future<void> cacheUser(UserModel? model) async {
-    final json = jsonEncode(model!.toMap());
-    await CacheHelper.saveData(key: 'userModel', value: json);
-  }
+  // Controllers & Assets
+  final EmojiTextEditingController postTextController =
+      EmojiTextEditingController();
+  final EmojiTextEditingController commentController =
+      EmojiTextEditingController();
+  final EmojiTextEditingController editPostController =
+      EmojiTextEditingController();
+  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController bioController = TextEditingController();
 
-  UserModel? getCachedUser() {
-    final json = CacheHelper.getData(key: 'userModel');
-    if (json == null) return null;
-    return UserModel.fromMap(
-      jsonDecode(json),
-      FirebaseAuth.instance.currentUser!.uid,
-    );
-  }
+  List<PostModel> posts = [];
+  List<PostModel> userPosts = [];
+  List<NotificationModel> notifications = [];
+
+  File? postImage;
+  File? profileImage;
+  File? coverImage;
+  File? editPostImage;
+
+  String? editPostImageUrl;
+  int unreadNotificationsCount = 0;
+  bool isEmojiVisible = false;
+
+  // --- Auth & User Data ---
 
   void listenToUserData() {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
     _userSubscription?.cancel();
+    _userSubscription = userRepo.getUserStream(uid).listen(
+      (user) async {
+        if (user == null) return;
 
-    _userSubscription = userRepo
-        .getUserStream(uid)
-        .listen(
-          (user) async {
-            if (user == null) return;
-
-            final currentToken = await FirebaseMessaging.instance.getToken();
-
-            if (user.fcmToken != currentToken) {
-              logout(navigatorKey.currentContext!);
-              return;
-            }
-
-            userModel = user;
-            await cacheUser(user);
-            emit(HomeGetCurrentUserSuccessState());
-          },
-          onError: (dynamic error) {
-            emit(HomeGetCurrentUserErrorState(error.toString()));
-          },
-        );
+        userModel = user;
+        await _cacheUser(user);
+        emit(HomeGetCurrentUserSuccessState());
+      },
+      onError: (dynamic error) =>
+          emit(HomeGetCurrentUserErrorState(error.toString())),
+    );
   }
 
   Future<void> getUserData() async {
-    final cached = getCachedUser();
+    final cached = _getCachedUser();
     if (cached != null) {
       userModel = cached;
       emit(HomeGetCurrentUserSuccessState());
     }
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
     try {
       final fresh = await userRepo.getUser(uid);
       final token = await FirebaseMessaging.instance.getToken();
 
-      if (token != null && fresh!.fcmToken != token) {
-        final updatedUser = fresh.copyWith(fcmToken: token);
+      if (token != null && fresh?.fcmToken != token) {
+        final updatedUser = fresh!.copyWith(fcmToken: token);
         await userRepo.updateUser(updatedUser);
         userModel = updatedUser;
       } else {
         userModel = fresh;
       }
 
-      await cacheUser(userModel);
+      await _cacheUser(userModel);
       emit(HomeGetCurrentUserSuccessState());
     } catch (e) {
-      if (cached == null) {
-        emit(HomeGetCurrentUserErrorState(e.toString()));
+      if (cached == null) emit(HomeGetCurrentUserErrorState(e.toString()));
+    }
+  }
+
+  Future<void> _cacheUser(UserModel? model) async {
+    if (model == null) return;
+    final json = jsonEncode(model.toMap());
+    await CacheHelper.saveData(key: 'userModel', value: json);
+  }
+
+  UserModel? _getCachedUser() {
+    final json = CacheHelper.getData(key: 'userModel');
+    if (json == null) return null;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return null;
+    return UserModel.fromMap(jsonDecode(json), uid);
+  }
+
+  void logout() {
+    _userSubscription?.cancel();
+    _postsSubscription?.cancel();
+    _userPostsSubscription?.cancel();
+    _notificationsSubscription?.cancel();
+    FirebaseAuth.instance.signOut().then((_) {
+      final context = navigatorKey.currentContext;
+      if (context != null && context.mounted) {
+        context.pushReplacement<Object>(Routes.login);
       }
-    }
+    });
   }
 
-  Future<void> getOtherUserData(String userId) async {
-    emit(HomeGetViewedUserLoadingState());
-    try {
-      final user = await userRepo.getUser(userId);
-      viewedUserModel = user;
-      emit(HomeGetViewedUserSuccessState());
-    } catch (e) {
-      emit(HomeGetViewedUserErrorState(e.toString()));
-    }
+  // --- Feed & Posts ---
+
+  void getPosts() {
+    emit(HomeGetFeedPostsLoadingState());
+    _postsSubscription?.cancel();
+    _postsSubscription = postRepo.getPosts().listen(
+      (postsList) {
+        posts = postsList;
+        emit(HomeGetFeedPostsSuccessState(postsList));
+      },
+      onError: (dynamic e) => emit(HomeGetFeedPostsErrorState(e.toString())),
+    );
   }
 
-  void initProfile(String? userId) {
-    if (userId != null && userId != viewedUserModel?.uid) {
-      viewedUserModel = null;
-      userPosts = [];
-      emit(HomeGetViewedUserLoadingState());
-    }
-
-    if (userId == null || userId == userModel?.uid) {
-      viewedUserModel = userModel;
-      getMyPosts();
-    } else {
-      getOtherUserData(userId);
-      getUserPosts(userId);
-    }
-  }
-
-  final EmojiTextEditingController postTextController = .new();
-  List<PostModel> posts = [];
-  File? postImage;
-  bool isEmojiVisible = false;
-
-  void toggleEmojiPicker() {
-    isEmojiVisible = !isEmojiVisible;
-    emit(HomeToggleEmojiPickerState());
-  }
-
-  Future<void> pickPostImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      postImage = File(pickedFile.path);
-      emit(HomePickPostImageState());
-    }
-  }
-
-  void removePostImage() {
-    postImage = null;
-    emit(HomeRemovePostImageState());
-  }
+  Stream<PostModel> getPostStream(String postId) =>
+      postRepo.getPostStream(postId);
 
   Future<void> addPost(String text) async {
-    if (userModel == null) {
-      emit(HomeAddPostErrorState("User not logged in"));
-      return;
-    }
+    if (userModel == null) return;
+
+    final postText = text.trim();
+    final imageToUpload = postImage;
+
+    // UI Reset
+    postTextController.clear();
+    postImage = null;
+    isEmojiVisible = false;
+
     emit(HomeAddPostLoadingState());
     try {
       String? imageUrl;
-      if (postImage != null) {
-        imageUrl = await uploadImageToCloudinary(postImage!);
+      if (imageToUpload != null) {
+        imageUrl = await uploadImageToCloudinary(imageToUpload);
       }
 
       await postRepo.addPost(
         userId: userModel!.uid!,
         username: userModel!.username!,
         userProfilePic: userModel!.photoUrl!,
-        text: text,
+        text: postText.isNotEmpty ? postText : null,
         imageUrl: imageUrl,
       );
-
-      postImage = null;
-      postTextController.clear();
-      isEmojiVisible = false;
       emit(HomeAddPostSuccessState());
     } catch (e) {
       emit(HomeAddPostErrorState(e.toString()));
     }
-  }
-
-  Future<String> uploadImageToCloudinary(File imageFile) async {
-    const cloudName = 'dvv07qlxn';
-    const uploadPreset = 'userProfile';
-    final uri = Uri.parse(
-      'https://api.cloudinary.com/v1_1/$cloudName/image/upload',
-    );
-    final request = http.MultipartRequest('POST', uri)
-      ..fields['upload_preset'] = uploadPreset
-      ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
-    final response = await request.send();
-    final res = await http.Response.fromStream(response);
-    if (res.statusCode == 200) {
-      final data = jsonDecode(res.body);
-      return data['secure_url'];
-    } else {
-      throw Exception('Cloudinary upload failed');
-    }
-  }
-
-  void getPosts() {
-    emit(HomeGetFeedPostsLoadingState());
-    try {
-      postRepo.getPosts().listen((posts) {
-        this.posts = posts;
-        emit(HomeGetFeedPostsSuccessState(posts));
-      });
-    } catch (e) {
-      emit(HomeGetFeedPostsErrorState(e.toString()));
-    }
-  }
-
-  Stream<PostModel> getPostStream(String postId) {
-    return postRepo.getPostStream(postId);
   }
 
   Future<void> togglePostLike(PostModel post) async {
@@ -235,25 +199,14 @@ class HomeCubit extends Cubit<HomeStates> {
         currentUserId: userModel!.uid!,
         likes: post.likes,
       );
+
       if (!isLiked && post.userId != userModel!.uid) {
-        await NotificationService.send(
-          receiverId: post.userId,
-          title: userModel!.username!,
-          contents: {"en": "liked your post ❤️", "ar": "أعجب بمنشورك ❤️"},
-          data: {
-            "type": "like",
-            "postId": post.postId,
-            "senderId": userModel!.uid!,
-          },
-        );
-        await notificationRepo.sendNotification(
-          senderId: userModel!.uid!,
-          senderName: userModel!.username!,
-          senderProfilePic: userModel!.photoUrl!,
+        await _sendNotification(
           receiverId: post.userId,
           type: 'like',
           postId: post.postId,
-          text: 'liked your post ❤️',
+          arMsg: "أعجب بمنشورك ❤️",
+          enMsg: "liked your post ❤️",
         );
       }
       emit(HomeLikePostSuccessState());
@@ -262,47 +215,36 @@ class HomeCubit extends Cubit<HomeStates> {
     }
   }
 
-  final EmojiTextEditingController commentController = .new();
+  // --- Comments & Replies ---
 
   Future<void> addComment(String postId, String postOwnerId) async {
-    if (userModel == null) {
-      emit(HomeAddCommentErrorState("User not logged in"));
-      return;
-    }
+    if (userModel == null) return;
+
+    final text = commentController.text.trim();
+    if (text.isEmpty) return;
+
+    commentController.clear();
     emit(HomeAddCommentLoadingState());
+
     try {
       await postRepo.addComment(
         postId: postId,
         userId: userModel!.uid!,
         username: userModel!.username!,
         userProfilePic: userModel!.photoUrl!,
-        text: commentController.text.trim(),
+        text: text,
       );
+
       if (postOwnerId != userModel!.uid) {
-        await NotificationService.send(
-          receiverId: postOwnerId,
-          title: userModel!.username!,
-          contents: {
-            "en": "commented on your post 💬",
-            "ar": "علّق على منشورك 💬",
-          },
-          data: {
-            "type": "comment",
-            "postId": postId,
-            "senderId": userModel!.uid!,
-          },
-        );
-        await notificationRepo.sendNotification(
-          senderId: userModel!.uid!,
-          senderName: userModel!.username!,
-          senderProfilePic: userModel!.photoUrl!,
+        await _sendNotification(
           receiverId: postOwnerId,
           type: 'comment',
           postId: postId,
-          text: 'commented on your post: ${commentController.text.trim()}',
+          arMsg: "علّق على منشورك 💬",
+          enMsg: "commented on your post 💬",
+          content: text,
         );
       }
-      commentController.clear();
       emit(HomeAddCommentSuccessState());
     } catch (e) {
       emit(HomeAddCommentErrorState(e.toString()));
@@ -328,27 +270,13 @@ class HomeCubit extends Cubit<HomeStates> {
       );
 
       if (commentOwnerId != userModel!.uid) {
-        await NotificationService.send(
-          receiverId: commentOwnerId,
-          title: userModel!.username!,
-          contents: {
-            "en": "replied to your comment 💬",
-            "ar": "رد على تعليقك 💬",
-          },
-          data: {
-            "type": "comment",
-            "postId": postId,
-            "senderId": userModel!.uid!,
-          },
-        );
-        await notificationRepo.sendNotification(
-          senderId: userModel!.uid!,
-          senderName: userModel!.username!,
-          senderProfilePic: userModel!.photoUrl!,
+        await _sendNotification(
           receiverId: commentOwnerId,
           type: 'comment',
           postId: postId,
-          text: 'replied to your comment: $text',
+          arMsg: "رد على تعليقك 💬",
+          enMsg: "replied to your comment 💬",
+          content: text,
         );
       }
       emit(HomeAddCommentSuccessState());
@@ -367,24 +295,111 @@ class HomeCubit extends Cubit<HomeStates> {
     }
   }
 
+  // --- Profile Logic ---
+
+  void initProfile(String? userId) {
+    if (userId != null && userId != viewedUserModel?.uid) {
+      viewedUserModel = null;
+      userPosts = [];
+      emit(HomeGetViewedUserLoadingState());
+    }
+
+    if (userId == null || userId == userModel?.uid) {
+      viewedUserModel = userModel;
+      getMyPosts();
+    } else {
+      getOtherUserData(userId);
+      getUserPosts(userId);
+    }
+  }
+
+  Future<void> getOtherUserData(String userId) async {
+    emit(HomeGetViewedUserLoadingState());
+    try {
+      viewedUserModel = await userRepo.getUser(userId);
+      emit(HomeGetViewedUserSuccessState());
+    } catch (e) {
+      emit(HomeGetViewedUserErrorState(e.toString()));
+    }
+  }
+
+  void getMyPosts() {
+    if (userModel?.uid == null || state is HomeGetProfilePostsLoadingState) {
+      return;
+    }
+    emit(HomeGetProfilePostsLoadingState());
+    _userPostsSubscription?.cancel();
+    _userPostsSubscription = postRepo.getUserPosts(userModel!.uid!).listen(
+      (postsList) {
+        userPosts = postsList;
+        emit(HomeGetProfilePostsSuccessState(postsList));
+      },
+      onError: (dynamic e) => emit(HomeGetProfilePostsErrorState(e.toString())),
+    );
+  }
+
+  void getUserPosts(String userId) {
+    if (state is HomeGetProfilePostsLoadingState) return;
+    emit(HomeGetProfilePostsLoadingState());
+    _userPostsSubscription?.cancel();
+    _userPostsSubscription = postRepo.getUserPosts(userId).listen(
+      (postsList) {
+        userPosts = postsList;
+        emit(HomeGetProfilePostsSuccessState(postsList));
+      },
+      onError: (dynamic e) => emit(HomeGetProfilePostsErrorState(e.toString())),
+    );
+  }
+
+  Future<void> updateProfile() async {
+    if (userModel == null) return;
+    emit(HomeUpdateProfileLoadingState());
+    try {
+      String profileUrl = userModel!.photoUrl!;
+      String coverUrl = userModel!.coverUrl!;
+
+      if (profileImage != null) {
+        profileUrl = await uploadImageToCloudinary(profileImage!);
+      }
+      if (coverImage != null) {
+        coverUrl = await uploadImageToCloudinary(coverImage!);
+      }
+
+      final updatedUser = userModel!.copyWith(
+        username: usernameController.text.trim(),
+        bio: bioController.text.trim(),
+        photoUrl: profileUrl,
+        coverUrl: coverUrl,
+      );
+
+      await userRepo.updateUser(updatedUser);
+      await postRepo.updateUserPosts(
+        userId: updatedUser.uid!,
+        username: updatedUser.username!,
+        userProfilePic: updatedUser.photoUrl!,
+      );
+
+      userModel = updatedUser;
+      profileImage = null;
+      coverImage = null;
+      emit(HomeUpdateProfileSuccessState());
+    } catch (e) {
+      emit(HomeUpdateProfileErrorState(e.toString()));
+    }
+  }
+
+  // --- Social Actions ---
+
   Future<void> followUser(String userIdToFollow) async {
     if (userModel == null) return;
     emit(HomeFollowUserLoadingState());
     try {
       await userRepo.followUser(userModel!.uid!, userIdToFollow);
-      await NotificationService.send(
-        receiverId: userIdToFollow,
-        title: userModel!.username!,
-        contents: {"en": "started following you 👤", "ar": "بدأ بمتابعتك 👤"},
-        data: {"type": "follow", "senderId": userModel!.uid!},
-      );
-      await notificationRepo.sendNotification(
-        senderId: userModel!.uid!,
-        senderName: userModel!.username!,
-        senderProfilePic: userModel!.photoUrl!,
+      await _sendNotification(
         receiverId: userIdToFollow,
         type: 'follow',
-        text: 'started following you',
+        arMsg: "بدأ بمتابعتك 👤",
+        enMsg: "started following you 👤",
       );
       await getUserData();
       emit(HomeFollowUserSuccessState());
@@ -405,112 +420,102 @@ class HomeCubit extends Cubit<HomeStates> {
     }
   }
 
-  Future<void> deletePost(String postId) async {
-    emit(HomeDeletePostLoadingState());
-    try {
-      await postRepo.deletePost(postId);
-      posts.removeWhere((post) => post.postId == postId);
-      emit(HomeDeletePostSuccessState());
-    } catch (e) {
-      emit(HomeDeletePostErrorState(e.toString()));
-    }
-  }
+  // --- Notifications ---
 
-  void logout(BuildContext context) {
-    _userSubscription?.cancel();
-    FirebaseAuth.instance.signOut().then((value) {
-      if (context.mounted) {
-        context.pushReplacement<Object>(Routes.login);
-      }
-    });
-  }
-
-  List<PostModel> userPosts = [];
-
-  void getMyPosts() {
-    emit(HomeGetProfilePostsLoadingState());
-    try {
-      postRepo.getUserPosts(userModel!.uid!).listen((posts) {
-        userPosts = posts;
-        emit(HomeGetProfilePostsSuccessState(posts));
-      });
-    } catch (e) {
-      emit(HomeGetProfilePostsErrorState(e.toString()));
-    }
-  }
-
-  void getUserPosts(String userId) {
-    emit(HomeGetProfilePostsLoadingState());
-    try {
-      postRepo.getUserPosts(userId).listen((posts) {
-        userPosts = posts;
-        emit(HomeGetProfilePostsSuccessState(posts));
-      });
-    } catch (e) {
-      emit(HomeGetProfilePostsErrorState(e.toString()));
-    }
-  }
-
-  File? profileImage;
-  File? coverImage;
-  final TextEditingController usernameController = .new();
-  final TextEditingController bioController = .new();
-
-  Future<void> pickProfileImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      profileImage = File(pickedFile.path);
-      emit(HomeProfileImagePickedState());
-    }
-  }
-
-  Future<void> pickCoverImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      coverImage = File(pickedFile.path);
-      emit(HomeCoverImagePickedState());
-    }
-  }
-
-  Future<void> updateProfile() async {
+  void getNotifications() {
     if (userModel == null) return;
-    emit(HomeUpdateProfileLoadingState());
-    try {
-      String profileUrl = userModel!.photoUrl!;
-      String coverUrl = userModel!.coverUrl!;
-      if (profileImage != null) {
-        profileUrl = await uploadImageToCloudinary(profileImage!);
-      }
-      if (coverImage != null) {
-        coverUrl = await uploadImageToCloudinary(coverImage!);
-      }
-      final updatedUser = userModel!.copyWith(
-        username: usernameController.text.trim(),
-        bio: bioController.text.trim(),
-        photoUrl: profileUrl,
-        coverUrl: coverUrl,
-      );
+    emit(HomeGetNotificationsLoadingState());
+    _notificationsSubscription?.cancel();
+    _notificationsSubscription = notificationRepo
+        .getUserNotifications(userModel!.uid!)
+        .listen(
+          (event) {
+            notifications = event;
+            unreadNotificationsCount = notifications
+                .where((n) => !n.isRead)
+                .length;
+            emit(HomeGetNotificationsSuccessState(event));
+          },
+          onError: (dynamic e) =>
+              emit(HomeGetNotificationsErrorState(e.toString())),
+        );
+  }
 
-      await userRepo.updateUser(updatedUser);
-      await postRepo.updateUserPosts(
-        userId: updatedUser.uid!,
-        username: updatedUser.username!,
-        userProfilePic: updatedUser.photoUrl!,
-      );
-      userModel = updatedUser;
-      profileImage = null;
-      coverImage = null;
-      emit(HomeUpdateProfileSuccessState());
+  Future<void> markNotificationAsRead(String notificationId) async {
+    try {
+      await notificationRepo.markNotificationAsRead(notificationId);
     } catch (e) {
-      emit(HomeUpdateProfileErrorState(e.toString()));
+      debugPrint("Error: $e");
     }
   }
 
-  final EmojiTextEditingController editPostController = .new();
-  File? editPostImage;
-  String? editPostImageUrl;
+  Future<void> _sendNotification({
+    required String receiverId,
+    required String type,
+    required String arMsg,
+    required String enMsg,
+    String? postId,
+    String? content,
+  }) async {
+    await NotificationService.send(
+      receiverId: receiverId,
+      title: userModel!.username!,
+      contents: {"en": enMsg, "ar": arMsg},
+      data: {"type": type, "postId": postId ?? "", "senderId": userModel!.uid!},
+    );
+    await notificationRepo.sendNotification(
+      senderId: userModel!.uid!,
+      senderName: userModel!.username!,
+      senderProfilePic: userModel!.photoUrl!,
+      receiverId: receiverId,
+      type: type,
+      postId: postId,
+      text: content != null ? '$enMsg: $content' : enMsg,
+    );
+  }
+
+  // --- Helpers & UI State ---
+
+  void toggleEmojiPicker() {
+    isEmojiVisible = !isEmojiVisible;
+    emit(HomeToggleEmojiPickerState());
+  }
+
+  Future<void> pickPostImage() async {
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+    );
+    if (pickedFile != null) {
+      postImage = File(pickedFile.path);
+      emit(HomePickPostImageState());
+    }
+  }
+
+  void removePostImage() {
+    postImage = null;
+    emit(HomeRemovePostImageState());
+  }
+
+  Future<String> uploadImageToCloudinary(File imageFile) async {
+    const cloudName = 'dvv07qlxn';
+    const uploadPreset = 'userProfile';
+    final uri = Uri.parse(
+      'https://api.cloudinary.com/v1_1/$cloudName/image/upload',
+    );
+
+    final request = http.MultipartRequest('POST', uri)
+      ..fields['upload_preset'] = uploadPreset
+      ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+
+    final response = await request.send();
+    final res = await http.Response.fromStream(response);
+
+    if (res.statusCode == 200) {
+      return jsonDecode(res.body)['secure_url'];
+    } else {
+      throw Exception(appTranslation().get('upload_failed'));
+    }
+  }
 
   void initEditPost(PostModel post) {
     editPostController.text = post.text ?? '';
@@ -522,33 +527,52 @@ class HomeCubit extends Cubit<HomeStates> {
   Future<void> updatePost({required String postId}) async {
     emit(HomeUpdatePostLoadingState());
     try {
-      String? imageUrl;
-      final oldPost = posts.firstWhere((p) => p.postId == postId);
+      String? imageUrl = editPostImageUrl;
       if (editPostImage != null) {
         imageUrl = await uploadImageToCloudinary(editPostImage!);
-      } else if (editPostImageUrl == null) {
-        imageUrl = null;
-      } else {
-        imageUrl = oldPost.imageUrl;
       }
+
       await postRepo.updatePost(
         postId: postId,
         text: editPostController.text.trim(),
         imageUrl: imageUrl,
       );
-      final index = posts.indexWhere((p) => p.postId == postId);
-      if (index != -1) {
-        posts[index] = posts[index].copyWith(
-          text: editPostController.text.trim(),
-          imageUrl: imageUrl,
-        );
-      }
+
       editPostController.clear();
       editPostImage = null;
-      editPostImageUrl = null;
       emit(HomeUpdatePostSuccessState());
     } catch (e) {
       emit(HomeUpdatePostErrorState(e.toString()));
+    }
+  }
+
+  Future<void> pickProfileImage() async {
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+    );
+    if (pickedFile != null) {
+      profileImage = File(pickedFile.path);
+      emit(HomeProfileImagePickedState());
+    }
+  }
+
+  Future<void> pickCoverImage() async {
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+    );
+    if (pickedFile != null) {
+      coverImage = File(pickedFile.path);
+      emit(HomeCoverImagePickedState());
+    }
+  }
+
+  Future<void> pickEditPostImage() async {
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+    );
+    if (pickedFile != null) {
+      editPostImage = File(pickedFile.path);
+      emit(HomeInitEditPostState());
     }
   }
 
@@ -558,28 +582,30 @@ class HomeCubit extends Cubit<HomeStates> {
     emit(HomeRemoveEditPostImageState());
   }
 
-  List<NotificationModel> notifications = [];
-  int unreadNotificationsCount = 0;
-
-  void getNotifications() {
-    if (userModel == null) return;
-    emit(HomeGetNotificationsLoadingState());
+  Future<void> deletePost(String postId) async {
+    emit(HomeDeletePostLoadingState());
     try {
-      notificationRepo.getUserNotifications(userModel!.uid!).listen((event) {
-        notifications = event;
-        unreadNotificationsCount = notifications.where((n) => !n.isRead).length;
-        emit(HomeGetNotificationsSuccessState(event));
-      });
+      await postRepo.deletePost(postId);
+      posts.removeWhere((p) => p.postId == postId);
+      emit(HomeDeletePostSuccessState());
     } catch (e) {
-      emit(HomeGetNotificationsErrorState(e.toString()));
+      emit(HomeDeletePostErrorState(e.toString()));
     }
   }
 
-  Future<void> markNotificationAsRead(String notificationId) async {
-    try {
-      await notificationRepo.markNotificationAsRead(notificationId);
-    } catch (e) {
-      debugPrint("Error marking notification as read: $e");
-    }
+  @override
+  Future<void> close() {
+    _userSubscription?.cancel();
+    _postsSubscription?.cancel();
+    _userPostsSubscription?.cancel();
+    _notificationsSubscription?.cancel();
+
+    postTextController.dispose();
+    commentController.dispose();
+    editPostController.dispose();
+    usernameController.dispose();
+    bioController.dispose();
+
+    return super.close();
   }
 }

@@ -69,6 +69,7 @@ class AddPostScreen extends StatelessWidget {
                 isEmojiVisible: homeCubit.isEmojiVisible,
                 focusNode: inputFocusNode,
                 onEmojiToggle: homeCubit.toggleEmojiPicker,
+                onTapImage: homeCubit.pickPostImage,
               ),
               EmojiPickerContainer(
                 isVisible: homeCubit.isEmojiVisible,

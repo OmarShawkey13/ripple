@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/theme/text_styles.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
@@ -14,13 +13,11 @@ class FollowListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final args = context.getArg<Map<String, dynamic>>();
     final String title = args?['title'] ?? '';
-    final List<String> uids = (args?['uids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
-    
+    final List<String> uids =
+        (args?['uids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+        [];
     return Scaffold(
-      backgroundColor: ColorsManager.backgroundColor,
       appBar: AppBar(
-        backgroundColor: ColorsManager.backgroundColor,
-        elevation: 0,
         title: Text(
           title,
           style: TextStylesManager.bold18,
@@ -31,10 +28,12 @@ class FollowListScreen extends StatelessWidget {
         ),
       ),
       body: ConditionalBuilder(
-        loadingState: uids.isNotEmpty,
+        loadingState: false,
+        emptyState: uids.isEmpty,
         successBuilder: (context) => ListView.separated(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           itemCount: uids.length,
+          physics: const BouncingScrollPhysics(),
           separatorBuilder: (context, index) => verticalSpace12,
           itemBuilder: (context, index) => UserListTile(uid: uids[index]),
         ),

@@ -11,31 +11,27 @@ class CommentTreeLines extends StatelessWidget {
     final lineColor = ColorsManager.dividerColor.withValues(alpha: 0.2);
 
     return SizedBox(
-      width: 32,
+      width: 24, // Reduced width
       child: Stack(
         children: [
           Positioned(
-            left: 0,
+            left: 8,
             top: 0,
-            bottom: isLast ? 24 : 0,
+            bottom: isLast
+                ? 16
+                : 0, // Adjust bottom to stop line for last reply
             child: Container(
               width: 1.5,
-              decoration: BoxDecoration(
-                color: lineColor,
-                borderRadius: BorderRadius.circular(1),
-              ),
+              color: lineColor,
             ),
           ),
           Positioned(
-            left: 0,
-            top: 24,
+            left: 8,
+            top: 16, // Align with avatar center
             child: Container(
-              width: 18,
+              width: 12,
               height: 1.5,
-              decoration: BoxDecoration(
-                color: lineColor,
-                borderRadius: BorderRadius.circular(1),
-              ),
+              color: lineColor,
             ),
           ),
         ],

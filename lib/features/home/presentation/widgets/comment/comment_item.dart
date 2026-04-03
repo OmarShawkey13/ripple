@@ -40,23 +40,27 @@ class _CommentItemState extends State<CommentItem> {
   Widget build(BuildContext context) {
     final isMe = homeCubit.userModel?.uid == widget.comment.userId;
 
-    return Container(
-      padding: EdgeInsets.only(
-        left: widget.isReply ? 0 : 16,
-        right: 16,
-        top: 4,
-        bottom: 4,
-      ),
-      child: IntrinsicHeight(
-        child: Row(
+    return RepaintBoundary(
+      child: Container(
+        padding: EdgeInsets.only(
+          left: widget.isReply ? 0 : 16,
+          right: 16,
+          top: 4,
+          bottom: 4,
+        ),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (widget.isReply) CommentTreeLines(isLast: widget.isLast),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (widget.isReply)
+                  SizedBox(
+                    height: 40, // Height matching avatar area for tree lines
+                    child: CommentTreeLines(isLast: widget.isLast),
+                  ),
+                Expanded(
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       CommentAvatar(
@@ -86,15 +90,18 @@ class _CommentItemState extends State<CommentItem> {
                       ),
                     ],
                   ),
-                  if (isReplying)
-                    CommentReplyInput(
-                      controller: replyController,
-                      onSend: _handleSendReply,
-                    ),
-                  if (widget.comment.replies.isNotEmpty) _buildRepliesList(),
-                ],
-              ),
+                ),
+              ],
             ),
+            if (isReplying)
+              Padding(
+                padding: EdgeInsets.only(left: widget.isReply ? 44 : 44),
+                child: CommentReplyInput(
+                  controller: replyController,
+                  onSend: _handleSendReply,
+                ),
+              ),
+            if (widget.comment.replies.isNotEmpty) _buildRepliesList(),
           ],
         ),
       ),

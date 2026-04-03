@@ -165,6 +165,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
                   isEmojiVisible: homeCubit.isEmojiVisible,
                   focusNode: inputFocusNode,
                   onEmojiToggle: homeCubit.toggleEmojiPicker,
+                  onTapImage: homeCubit.pickEditPostImage,
                 ),
                 EmojiPickerContainer(
                   isVisible: homeCubit.isEmojiVisible,

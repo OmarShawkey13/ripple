@@ -24,7 +24,7 @@ class UserListTile extends StatelessWidget {
         }
         final user = snapshot.data;
         if (user == null) return const SizedBox.shrink();
-        
+
         return InkWell(
           onTap: () {
             context.push(Routes.profile, arguments: user.uid);
@@ -40,7 +40,8 @@ class UserListTile extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundImage: user.photoUrl != null && user.photoUrl!.isNotEmpty
+                  backgroundImage:
+                      user.photoUrl != null && user.photoUrl!.isNotEmpty
                       ? NetworkImage(user.photoUrl!)
                       : null,
                   backgroundColor: ColorsManager.primary.withValues(alpha: 0.1),

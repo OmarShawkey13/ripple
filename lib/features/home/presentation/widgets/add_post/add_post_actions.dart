@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
-import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 
 class AddPostActions extends StatelessWidget {
   final bool isEmojiVisible;
   final FocusNode focusNode;
   final VoidCallback onEmojiToggle;
+  final void Function() onTapImage;
 
   const AddPostActions({
     super.key,
     required this.isEmojiVisible,
     required this.focusNode,
     required this.onEmojiToggle,
+    required this.onTapImage,
   });
 
   @override
@@ -33,7 +34,7 @@ class AddPostActions extends StatelessWidget {
             icon: Icons.image_outlined,
             label: 'Photo',
             color: Colors.green,
-            onTap: homeCubit.pickPostImage,
+            onTap: onTapImage,
           ),
           horizontalSpace24,
           _ActionButton(

@@ -8,31 +8,45 @@ class EmojiTextEditingController extends TextEditingController {
     TextStyle? style,
     required bool withComposing,
   }) {
+    if (text.isEmpty) return const TextSpan();
+
     final List<InlineSpan> children = [];
     final characters = text.characters;
     final double fontSize = style?.fontSize ?? 16.0;
+
+    String currentText = "";
 
     for (var char in characters) {
       final assetPath = EmojiData.getEmojiPath(char);
 
       if (assetPath != null) {
+        // Add pending text first
+        if (currentText.isNotEmpty) {
+          children.add(TextSpan(text: currentText, style: style));
+          currentText = "";
+        }
+
+        // Add emoji
         children.add(
           WidgetSpan(
             alignment: PlaceholderAlignment.middle,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 1),
-              child: Image.asset(
-                assetPath,
-                width: fontSize * 1.25,
-                height: fontSize * 1.25,
-                cacheWidth: (fontSize * 3).toInt(),
-              ),
+            child: Image.asset(
+              assetPath,
+              width: fontSize * 1.3,
+              height: fontSize * 1.3,
+              cacheWidth: 64, // Fix cache size to avoid large memory usage
+              filterQuality:
+                  FilterQuality.low, // Lower quality for better performance
             ),
           ),
         );
       } else {
-        children.add(TextSpan(text: char, style: style));
+        currentText += char;
       }
+    }
+
+    if (currentText.isNotEmpty) {
+      children.add(TextSpan(text: currentText, style: style));
     }
 
     return TextSpan(style: style, children: children);

@@ -7,6 +7,7 @@ import 'package:ripple/core/utils/constants/constants.dart';
 import 'package:ripple/core/utils/constants/routes.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
 import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
+import 'package:ripple/core/utils/cubit/home/home_state.dart';
 import 'package:ripple/core/utils/cubit/theme/theme_cubit.dart';
 import 'package:ripple/core/utils/cubit/theme/theme_state.dart';
 import 'package:ripple/core/utils/extensions/context_extension.dart';
@@ -18,7 +19,6 @@ class WhatsNewWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, state) {
-        final user = homeCubit.userModel;
         return Column(
           children: [
             InkWell(
@@ -30,29 +30,41 @@ class WhatsNewWidget extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: ColorsManager.outline.withValues(alpha: 0.5),
-                          width: 1,
-                        ),
-                      ),
-                      child: CircleAvatar(
-                        radius: 18,
-                        backgroundColor: ColorsManager.surfaceContainer,
-                        backgroundImage:
-                            user?.photoUrl != null && user!.photoUrl!.isNotEmpty
-                            ? CachedNetworkImageProvider(user.photoUrl!)
-                            : null,
-                        child: user?.photoUrl == null || user!.photoUrl!.isEmpty
-                            ? Icon(
-                                Icons.person_outline,
-                                size: 20,
-                                color: ColorsManager.textSecondaryColor,
-                              )
-                            : null,
-                      ),
+                    BlocBuilder<HomeCubit, HomeStates>(
+                      buildWhen: (previous, current) =>
+                          current is HomeGetCurrentUserSuccessState,
+                      builder: (context, state) {
+                        final user = homeCubit.userModel;
+                        return Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: ColorsManager.outline.withValues(
+                                alpha: 0.5,
+                              ),
+                              width: 1,
+                            ),
+                          ),
+                          child: CircleAvatar(
+                            radius: 18,
+                            backgroundColor: ColorsManager.surfaceContainer,
+                            backgroundImage:
+                                user?.photoUrl != null &&
+                                    user!.photoUrl!.isNotEmpty
+                                ? CachedNetworkImageProvider(user.photoUrl!)
+                                : null,
+                            child:
+                                user?.photoUrl == null ||
+                                    user!.photoUrl!.isEmpty
+                                ? Icon(
+                                    Icons.person_outline,
+                                    size: 20,
+                                    color: ColorsManager.textSecondaryColor,
+                                  )
+                                : null,
+                          ),
+                        );
+                      },
                     ),
                     horizontalSpace12,
                     Expanded(

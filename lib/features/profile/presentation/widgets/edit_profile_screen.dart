@@ -20,7 +20,6 @@ class EditProfileScreen extends StatelessWidget {
     final user = homeCubit.userModel;
     if (user == null) return const SizedBox.shrink();
 
-    // Initialize controllers once
     homeCubit.usernameController.text = user.username ?? '';
     homeCubit.bioController.text = user.bio ?? '';
 
@@ -55,7 +54,6 @@ class EditProfileScreen extends StatelessWidget {
       },
       builder: (context, state) {
         final isLoading = state is HomeUpdateProfileLoadingState;
-
         return Scaffold(
           backgroundColor: ColorsManager.backgroundColor,
           appBar: EditProfileAppBar(
@@ -64,37 +62,38 @@ class EditProfileScreen extends StatelessWidget {
           ),
           body: Stack(
             children: [
-              SingleChildScrollView(
+              CustomScrollView(
                 physics: const BouncingScrollPhysics(),
-                child: Column(
-                  children: [
-                    Stack(
-                      alignment: Alignment.bottomCenter,
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Stack(
+                      alignment: Alignment.topCenter,
                       clipBehavior: Clip.none,
                       children: [
                         EditProfileCover(
-                          height: 200,
                           cubit: homeCubit,
                           user: user,
                         ),
                         Positioned(
-                          bottom: -50,
+                          bottom: -65,
                           child: EditProfileHeader(
                             cubit: homeCubit,
                             user: user,
-                            profileRadius: 60,
                           ),
                         ),
                       ],
                     ),
-                    verticalSpace60,
-                    const EditProfileForm(),
-                  ],
-                ),
+                  ),
+                  SliverToBoxAdapter(child: verticalSpace85),
+                  const SliverToBoxAdapter(
+                    child: EditProfileForm(),
+                  ),
+                  SliverToBoxAdapter(child: verticalSpace40),
+                ],
               ),
               if (isLoading)
                 Container(
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: Colors.black.withValues(alpha: 0.4),
                   child: const Center(child: LoadingIndicator()),
                 ),
             ],

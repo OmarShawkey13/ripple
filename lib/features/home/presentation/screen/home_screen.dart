@@ -23,9 +23,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    homeCubit.getUserData();
-    homeCubit.getPosts();
-    homeCubit.getNotifications();
+    Future.microtask(() {
+      homeCubit.getUserData();
+      homeCubit.getPosts();
+      homeCubit.getNotifications();
+    });
   }
 
   @override
@@ -55,14 +57,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SliverToBoxAdapter(
                       child: WhatsNewWidget(),
                     ),
-                    SliverToBoxAdapter(
-                      child: ConditionalBuilder(
-                        loadingState:
-                            state is HomeGetFeedPostsLoadingState &&
-                            homeCubit.posts.isEmpty,
-                        successBuilder: (context) => ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
+                    ConditionalBuilder(
+                      loadingState:
+                          state is HomeGetFeedPostsLoadingState &&
+                          homeCubit.posts.isEmpty,
+                      loadingBuilder: (context) => const SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: LoadingIndicator(),
+                      ),
+                      successBuilder: (context) => SliverPadding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        sliver: SliverList.separated(
                           itemBuilder: (context, index) => PostCard(
                             post: homeCubit.posts[index],
                           ),
@@ -74,10 +79,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             endIndent: 16,
                           ),
                           itemCount: homeCubit.posts.length,
-                        ),
-                        loadingBuilder: (context) => const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 50.0),
-                          child: LoadingIndicator(),
                         ),
                       ),
                     ),

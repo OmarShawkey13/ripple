@@ -134,6 +134,8 @@ class HomeUpdatePostErrorState extends HomeStates {
 
 class HomeRemoveEditPostImageState extends HomeStates {}
 
+class HomeInitEditPostState extends HomeStates {}
+
 // Profile Update States
 class HomeProfileImagePickedState extends HomeStates {}
 
@@ -160,5 +162,3 @@ class HomeGetNotificationsErrorState extends HomeStates {
   final String error;
   HomeGetNotificationsErrorState(this.error);
 }
-
-class HomeInitEditPostState extends HomeStates {}

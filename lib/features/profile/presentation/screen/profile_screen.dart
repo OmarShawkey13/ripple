@@ -11,17 +11,30 @@ import 'package:ripple/features/profile/presentation/widgets/profile_cover.dart'
 import 'package:ripple/features/profile/presentation/widgets/profile_header.dart';
 import 'package:ripple/features/profile/presentation/widgets/profile_posts_section.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   static const double coverHeight = 240;
   static const double profileRadius = 56;
 
   @override
-  Widget build(BuildContext context) {
-    final userId = context.getArg<String?>();
-    homeCubit.initProfile(userId);
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
 
+class _ProfileScreenState extends State<ProfileScreen> {
+  String? userId;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      userId = context.getArg<String?>();
+      homeCubit.initProfile(userId);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return BlocBuilder<HomeCubit, HomeStates>(
       buildWhen: (previous, current) =>
           current is HomeGetProfilePostsSuccessState ||
@@ -54,17 +67,19 @@ class ProfileScreen extends StatelessWidget {
                       clipBehavior: Clip.none,
                       children: [
                         ProfileCover(
-                          height: coverHeight,
+                          height: ProfileScreen.coverHeight,
                           imageUrl: viewedUser!.coverUrl,
                         ),
                         const ProfileBackButton(),
                         Padding(
                           padding: const EdgeInsets.only(
-                            top: coverHeight - profileRadius,
+                            top:
+                                ProfileScreen.coverHeight -
+                                ProfileScreen.profileRadius,
                           ),
                           child: ProfileHeader(
                             user: viewedUser,
-                            profileRadius: profileRadius,
+                            profileRadius: ProfileScreen.profileRadius,
                             currentUser: currentUser!,
                             postCount: posts.length,
                           ),
