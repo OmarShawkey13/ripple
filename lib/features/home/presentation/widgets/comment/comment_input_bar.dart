@@ -43,7 +43,7 @@ class CommentInputBar extends StatelessWidget {
       ),
       child: SafeArea(
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             PostAvatar(
               userProfilePic: homeCubit.userModel?.photoUrl,
