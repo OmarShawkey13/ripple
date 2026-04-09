@@ -1,7 +1,7 @@
 # Ripple 🌊 | High-Performance Social Media Ecosystem
 
 <p align="center">
-  <img src="assets/images/logo.png" width="120" alt="Ripple Logo">
+  <img src="assets/images/logo.webp" width="120" alt="Ripple Logo">
   <br>
   <b>An Enterprise-Grade Social Experience built with Flutter & Firebase.</b>
   <br>
