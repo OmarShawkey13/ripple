@@ -20,7 +20,9 @@ class ProfileCover extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute<Object>(
-            builder: (context) => ImagePreviewPage(url: imageUrl!),
+            builder: (context) => ImagePreviewPage(
+              urls: [imageUrl!],
+            ),
           ),
         );
       },

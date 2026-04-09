@@ -23,37 +23,38 @@ class PostActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = isActive ? activeColor : ColorsManager.textSecondaryColor;
 
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Row(
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? activeColor.withValues(alpha: 0.1)
-                  : Colors.transparent,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive
+              ? activeColor.withValues(alpha: 0.08)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
               icon,
               size: 20,
               color: color.withValues(alpha: 0.8),
             ),
-          ),
-          if (count > 0) ...[
-            horizontalSpace4,
-            Text(
-              count.toString(),
-              style: TextStylesManager.medium12.copyWith(
-                color: color.withValues(alpha: 0.9),
-                fontSize: 12,
+            if (count > 0) ...[
+              horizontalSpace6,
+              Text(
+                count.toString(),
+                style: TextStylesManager.medium14.copyWith(
+                  color: color.withValues(alpha: 0.9),
+                  fontSize: 13,
+                ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

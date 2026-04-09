@@ -8,19 +8,31 @@ class CommentSendButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: ColorsManager.primary,
-        shape: BoxShape.circle,
-      ),
-      child: IconButton(
-        icon: const Icon(
-          Icons.send_rounded,
-          color: Colors.white,
-          size: 20,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onSend,
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          height: 44,
+          width: 44,
+          decoration: BoxDecoration(
+            color: ColorsManager.primary,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: ColorsManager.primary.withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.send_rounded,
+            color: Colors.white,
+            size: 20,
+          ),
         ),
-        onPressed: onSend,
-        visualDensity: VisualDensity.compact,
       ),
     );
   }

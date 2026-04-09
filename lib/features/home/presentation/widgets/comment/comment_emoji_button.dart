@@ -16,10 +16,13 @@ class CommentEmojiButton extends StatelessWidget {
     return IconButton(
       icon: Icon(
         isEmojiVisible ? Icons.keyboard_rounded : Icons.emoji_emotions_outlined,
-        size: 24,
+        size: 20,
       ),
-      color: ColorsManager.primary,
+      color: ColorsManager.iconSecondaryColor,
       onPressed: onTap,
+      visualDensity: VisualDensity.compact,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
     );
   }
 }

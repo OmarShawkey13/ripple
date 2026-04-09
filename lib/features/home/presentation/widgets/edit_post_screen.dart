@@ -115,47 +115,38 @@ class _EditPostScreenState extends State<EditPostScreen> {
                           useCardDecoration: false,
                         ),
                         verticalSpace16,
-                        ConditionalBuilder(
-                          loadingState:
-                              homeCubit.editPostImage == null &&
-                              homeCubit.editPostImageUrl == null,
-                          loadingBuilder: (context) => const SizedBox.shrink(),
-                          successBuilder: (context) => Stack(
-                            alignment: AlignmentDirectional.topEnd,
-                            children: [
-                              Container(
-                                height:
-                                    MediaQuery.of(context).size.height * .25,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(4),
-                                  image: DecorationImage(
-                                    image: homeCubit.editPostImage != null
-                                        ? FileImage(homeCubit.editPostImage!)
-                                        : NetworkImage(
-                                                homeCubit.editPostImageUrl!,
-                                              )
-                                              as ImageProvider,
-                                    fit: BoxFit.cover,
+                        if ((homeCubit.editPostImageUrls?.isNotEmpty ??
+                                false) ||
+                            homeCubit.editPostImages.isNotEmpty)
+                          SizedBox(
+                            height: 200,
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              children: [
+                                if (homeCubit.editPostImageUrls != null)
+                                  ...homeCubit.editPostImageUrls!
+                                      .asMap()
+                                      .entries
+                                      .map(
+                                        (e) => _buildImageItem(
+                                          image: NetworkImage(e.value),
+                                          onRemove: () =>
+                                              homeCubit.removeEditPostImage(
+                                                e.key,
+                                                isUrl: true,
+                                              ),
+                                        ),
+                                      ),
+                                ...homeCubit.editPostImages.asMap().entries.map(
+                                  (e) => _buildImageItem(
+                                    image: FileImage(e.value),
+                                    onRemove: () =>
+                                        homeCubit.removeEditPostImage(e.key),
                                   ),
                                 ),
-                              ),
-                              IconButton(
-                                onPressed: () =>
-                                    homeCubit.removeEditPostImage(),
-                                icon: const CircleAvatar(
-                                  radius: 20,
-                                  backgroundColor: ColorsManager.primary,
-                                  child: Icon(
-                                    Icons.close,
-                                    size: 16,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -176,6 +167,35 @@ class _EditPostScreenState extends State<EditPostScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildImageItem({
+    required ImageProvider image,
+    required VoidCallback onRemove,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: Stack(
+        alignment: AlignmentDirectional.topEnd,
+        children: [
+          Container(
+            width: 150,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              image: DecorationImage(image: image, fit: BoxFit.cover),
+            ),
+          ),
+          IconButton(
+            onPressed: onRemove,
+            icon: const CircleAvatar(
+              radius: 14,
+              backgroundColor: ColorsManager.primary,
+              child: Icon(Icons.close, size: 14, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

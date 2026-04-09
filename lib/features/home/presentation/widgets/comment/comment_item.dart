@@ -10,13 +10,16 @@ import 'package:ripple/features/home/presentation/widgets/comment/comment_tree_l
 
 class CommentItem extends StatefulWidget {
   final String postId;
+  final String postOwnerId;
   final CommentModel comment;
   final bool isReply;
+
   final bool isLast;
 
   const CommentItem({
     super.key,
     required this.postId,
+    required this.postOwnerId,
     required this.comment,
     this.isReply = false,
     this.isLast = false,
@@ -28,113 +31,102 @@ class CommentItem extends StatefulWidget {
 
 class _CommentItemState extends State<CommentItem> {
   bool isReplying = false;
-  final TextEditingController replyController = TextEditingController();
 
-  @override
-  void dispose() {
-    replyController.dispose();
-    super.dispose();
-  }
+  void toggleReplying() => setState(() => isReplying = !isReplying);
 
   @override
   Widget build(BuildContext context) {
-    final isMe = homeCubit.userModel?.uid == widget.comment.userId;
-
-    return RepaintBoundary(
-      child: Container(
-        padding: EdgeInsets.only(
-          left: widget.isReply ? 0 : 16,
-          right: 16,
-          top: 4,
-          bottom: 4,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    return Padding(
+      padding: EdgeInsets.only(
+        left: widget.isReply ? 48.0 : 16.0,
+        right: 16.0,
+        top: 12.0,
+        bottom: 4.0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          IntrinsicHeight(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (widget.isReply)
-                  SizedBox(
-                    height: 40, // Height matching avatar area for tree lines
-                    child: CommentTreeLines(isLast: widget.isLast),
-                  ),
+                if (widget.isReply) CommentTreeLines(isLast: widget.isLast),
+                CommentAvatar(
+                  imageUrl: widget.comment.userProfilePic,
+                  isReply: widget.isReply,
+                  radius: widget.isReply ? 14 : 18,
+                ),
+                horizontalSpace12,
                 Expanded(
-                  child: Row(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CommentAvatar(
-                        imageUrl: widget.comment.userProfilePic,
+                      CommentBubble(
+                        postId: widget.postId,
+                        comment: widget.comment,
+                        isMe: widget.comment.userId == homeCubit.userModel?.uid,
                         isReply: widget.isReply,
                       ),
-                      horizontalSpace12,
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CommentBubble(
-                              postId: widget.postId,
-                              comment: widget.comment,
-                              isMe: isMe,
-                              isReply: widget.isReply,
-                            ),
-                            CommentActionButtons(
-                              timestamp: widget.comment.timestamp.toDate(),
-                              isReply: widget.isReply,
-                              isReplying: isReplying,
-                              onReplyTap: () =>
-                                  setState(() => isReplying = !isReplying),
-                            ),
-                          ],
-                        ),
+                      verticalSpace4,
+                      CommentActionButtons(
+                        timestamp: widget.comment.timestamp.toDate(),
+                        isReply: widget.isReply,
+                        isReplying: isReplying,
+                        onReplyTap: toggleReplying,
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            if (isReplying)
-              Padding(
-                padding: EdgeInsets.only(left: widget.isReply ? 44 : 44),
-                child: CommentReplyInput(
-                  controller: replyController,
-                  onSend: _handleSendReply,
-                ),
+          ),
+          if (isReplying)
+            Padding(
+              padding: const EdgeInsets.only(left: 48, top: 8),
+              child: CommentReplyInput(
+                postId: widget.postId,
+                commentId: widget.comment.commentId,
+                commentOwnerId: widget.comment.userId,
+                onCancel: toggleReplying,
+                onSuccess: () => setState(() => isReplying = false),
               ),
-            if (widget.comment.replies.isNotEmpty) _buildRepliesList(),
-          ],
-        ),
+            ),
+          _buildRepliesStream(),
+        ],
       ),
     );
   }
 
-  Future<void> _handleSendReply() async {
-    final text = replyController.text.trim();
-    if (text.isNotEmpty) {
-      await homeCubit.addReply(
-        postId: widget.postId,
-        commentId: widget.comment.commentId,
-        commentOwnerId: widget.comment.userId,
-        text: text,
-      );
-      replyController.clear();
-      setState(() => isReplying = false);
-    }
-  }
+  Widget _buildRepliesStream() {
+    if (widget.isReply) return const SizedBox.shrink();
 
-  Widget _buildRepliesList() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 8),
-      child: Column(
-        children: widget.comment.replies.asMap().entries.map((entry) {
-          return CommentItem(
-            postId: widget.postId,
-            comment: entry.value,
-            isReply: true,
-            isLast: entry.key == widget.comment.replies.length - 1,
-          );
-        }).toList(),
+    return StreamBuilder<List<CommentModel>>(
+      stream: homeCubit.postRepo.getRepliesStream(
+        widget.postId,
+        widget.comment.commentId,
       ),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final replies = snapshot.data!;
+        return Column(
+          children: replies.asMap().entries.map((entry) {
+            final index = entry.key;
+            final reply = entry.value;
+            final isLast = index == replies.length - 1;
+
+            return CommentItem(
+              postId: widget.postId,
+              postOwnerId: widget.postOwnerId,
+              comment: reply,
+              isReply: true,
+              isLast: isLast,
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }

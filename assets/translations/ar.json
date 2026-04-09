@@ -53,6 +53,7 @@
   "bio": "نبذة",
   "notifications": "الإشعارات",
   "no_notifications": "لا توجد إشعارات بعد",
+  "no_comments_yet": "لا توجد تعليقات بعد",
   "delete": "حذف",
   "copied": "تم النسخ إلى الحافظة",
   "about_ripple": "عن ريبل",
@@ -62,5 +63,9 @@
   "developer": "المطور",
   "made_with_love": "صنع بكل حب باستخدام Flutter",
   "error": "خطأ",
-  "back": "رجوع"
+  "back": "رجوع",
+  "ripple_user": "مستخدم ريبل",
+  "ripple_social_app": "تطبيق ريبل الاجتماعي",
+  "ripple_version": "ريبل v1.0.0",
+  "settings": "الإعدادات"
 }

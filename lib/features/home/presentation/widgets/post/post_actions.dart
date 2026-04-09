@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ripple/core/models/comment_model.dart';
 import 'package:ripple/core/models/post_model.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/utils/constants/routes.dart';
@@ -15,6 +16,7 @@ class PostActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLiked = post.likes.contains(homeCubit.userModel?.uid);
+
     return Padding(
       padding: const EdgeInsets.only(top: 4),
       child: Row(
@@ -32,18 +34,24 @@ class PostActions extends StatelessWidget {
                 onTap: () => homeCubit.togglePostLike(post),
               ),
               horizontalSpace16,
-              PostActionButton(
-                icon: Icons.chat_bubble_outline_rounded,
-                count: post.comments.length,
-                activeColor: ColorsManager.primary,
-                isActive: false,
-                onTap: () => context.push(Routes.comments, arguments: post),
+              StreamBuilder<List<CommentModel>>(
+                stream: homeCubit.postRepo.getCommentsStream(post.postId),
+                builder: (context, snapshot) {
+                  final count = snapshot.data?.length ?? 0;
+                  return PostActionButton(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    count: count,
+                    activeColor: ColorsManager.primary,
+                    isActive: false,
+                    onTap: () => context.push(Routes.comments, arguments: post),
+                  );
+                },
               ),
             ],
           ),
           IconButton(
             onPressed: () {
-              // Share logic
+              // منطق المشاركة المستقبلي
             },
             style: IconButton.styleFrom(
               padding: EdgeInsets.zero,

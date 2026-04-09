@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ripple/core/models/comment_model.dart';
 import 'package:ripple/core/models/post_model.dart';
-import 'package:uuid/uuid.dart';
 
 class PostRepository {
   final FirebaseFirestore _firestore;
@@ -9,15 +8,16 @@ class PostRepository {
   PostRepository({FirebaseFirestore? firestore})
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
+  // --- Post Core ---
+
   Future<void> addPost({
     required String userId,
     required String username,
     required String userProfilePic,
     String? text,
-    String? imageUrl,
+    List<String>? imageUrls,
   }) async {
     final postRef = _firestore.collection('posts').doc();
-
     final newPost = PostModel(
       postId: postRef.id,
       userId: userId,
@@ -25,11 +25,10 @@ class PostRepository {
       userProfilePic: userProfilePic,
       timestamp: Timestamp.now(),
       text: text,
-      imageUrl: imageUrl,
+      imageUrls: imageUrls,
       likes: [],
-      comments: [],
+      comments: [], // سنبقيها فارغة في المستند الرئيسي
     );
-
     await postRef.set(newPost.toMap());
   }
 
@@ -66,13 +65,14 @@ class PostRepository {
         );
   }
 
+  // --- Likes ---
+
   Future<void> toggleLike({
     required String postId,
     required String currentUserId,
     required List<String> likes,
   }) async {
     final postRef = _firestore.collection('posts').doc(postId);
-
     if (likes.contains(currentUserId)) {
       await postRef.update({
         'likes': FieldValue.arrayRemove([currentUserId]),
@@ -84,6 +84,22 @@ class PostRepository {
     }
   }
 
+  // --- Comments (Sub-collection) ---
+
+  Stream<List<CommentModel>> getCommentsStream(String postId) {
+    return _firestore
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => CommentModel.fromMap(doc.data(), doc.id))
+              .toList(),
+        );
+  }
+
   Future<void> addComment({
     required String postId,
     required String userId,
@@ -91,9 +107,13 @@ class PostRepository {
     required String userProfilePic,
     required String text,
   }) async {
-    final commentId = const Uuid().v4();
+    final commentRef = _firestore
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .doc();
     final comment = CommentModel(
-      commentId: commentId,
+      commentId: commentRef.id,
       userId: userId,
       username: username,
       userProfilePic: userProfilePic,
@@ -101,10 +121,25 @@ class PostRepository {
       timestamp: Timestamp.now(),
       replies: [],
     );
+    await commentRef.set(comment.toMap());
+  }
 
-    await _firestore.collection('posts').doc(postId).update({
-      'comments': FieldValue.arrayUnion([comment.toMap()]),
-    });
+  // --- Replies (Sub-collection inside Comment) ---
+
+  Stream<List<CommentModel>> getRepliesStream(String postId, String commentId) {
+    return _firestore
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .doc(commentId)
+        .collection('replies')
+        .orderBy('timestamp', descending: false)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => CommentModel.fromMap(doc.data(), doc.id))
+              .toList(),
+        );
   }
 
   Future<void> addReply({
@@ -115,18 +150,16 @@ class PostRepository {
     required String userProfilePic,
     required String text,
   }) async {
-    final postDoc = await _firestore.collection('posts').doc(postId).get();
-    if (!postDoc.exists) return;
+    final replyRef = _firestore
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .doc(commentId)
+        .collection('replies')
+        .doc();
 
-    final post = PostModel.fromMap(postDoc.data()!, postDoc.id);
-    final comments = List<CommentModel>.from(post.comments);
-
-    final commentIndex = comments.indexWhere((c) => c.commentId == commentId);
-    if (commentIndex == -1) return;
-
-    final replyId = const Uuid().v4();
     final reply = CommentModel(
-      commentId: replyId,
+      commentId: replyRef.id,
       userId: userId,
       username: username,
       userProfilePic: userProfilePic,
@@ -134,26 +167,22 @@ class PostRepository {
       timestamp: Timestamp.now(),
       replies: [],
     );
-
-    final updatedComment = comments[commentIndex].copyWith(
-      replies: [...comments[commentIndex].replies, reply],
-    );
-
-    comments[commentIndex] = updatedComment;
-
-    await _firestore.collection('posts').doc(postId).update({
-      'comments': comments.map((c) => c.toMap()).toList(),
-    });
+    await replyRef.set(reply.toMap());
   }
 
   Future<void> deleteComment({
     required String postId,
     required CommentModel comment,
   }) async {
-    await _firestore.collection('posts').doc(postId).update({
-      'comments': FieldValue.arrayRemove([comment.toMap()]),
-    });
+    await _firestore
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .doc(comment.commentId)
+        .delete();
   }
+
+  // --- Updates & Deletes ---
 
   Future<void> updateUserPosts({
     required String userId,
@@ -177,11 +206,11 @@ class PostRepository {
   Future<void> updatePost({
     required String postId,
     required String text,
-    String? imageUrl,
+    List<String>? imageUrls,
   }) async {
     await _firestore.collection('posts').doc(postId).update({
       'text': text,
-      'imageUrl': imageUrl,
+      'imageUrls': imageUrls,
     });
   }
 

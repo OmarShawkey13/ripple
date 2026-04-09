@@ -29,7 +29,7 @@ class AddPostAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: FilledButton(
             onPressed: () {
               if (homeCubit.postTextController.text.trim().isNotEmpty ||
-                  homeCubit.postImage != null) {
+                  homeCubit.postImages.isNotEmpty) {
                 homeCubit.addPost(homeCubit.postTextController.text);
               }
             },

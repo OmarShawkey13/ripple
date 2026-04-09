@@ -4,7 +4,6 @@ import 'package:ripple/core/models/post_model.dart';
 import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/theme/emoji_text.dart';
 import 'package:ripple/core/theme/text_styles.dart';
-import 'package:ripple/core/utils/constants/constants.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
 import 'package:ripple/features/home/presentation/widgets/post/post_menu.dart';
 
@@ -21,6 +20,7 @@ class PostHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
           child: Column(
@@ -28,19 +28,20 @@ class PostHeader extends StatelessWidget {
             children: [
               EmojiText(
                 text: post.username,
-                style: TextStylesManager.bold14.copyWith(
+                style: TextStylesManager.bold16.copyWith(
                   color: ColorsManager.textColor,
-                  letterSpacing: 0.1,
+                  letterSpacing: -0.3,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               verticalSpace2,
               Text(
                 _formatTimestamp(post.timestamp.toDate()),
                 style: TextStylesManager.regular12.copyWith(
                   color: ColorsManager.textSecondaryColor.withValues(
-                    alpha: 0.7,
+                    alpha: 0.6,
                   ),
-                  fontSize: 10,
                 ),
               ),
             ],
@@ -58,6 +59,6 @@ class PostHeader extends StatelessWidget {
     if (difference.inDays >= 1) return '${difference.inDays}d';
     if (difference.inHours >= 1) return '${difference.inHours}h';
     if (difference.inMinutes >= 1) return '${difference.inMinutes}m';
-    return appTranslation().get('now');
+    return 'الآن';
   }
 }

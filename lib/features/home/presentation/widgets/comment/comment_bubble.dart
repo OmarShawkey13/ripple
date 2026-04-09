@@ -29,18 +29,26 @@ class CommentBubble extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          EmojiText(
-            text: comment.username,
-            style: TextStylesManager.bold14.copyWith(
-              color: ColorsManager.textColor,
-            ),
+          Row(
+            children: [
+              EmojiText(
+                text: comment.username,
+                style: TextStylesManager.bold14.copyWith(
+                  color: ColorsManager.textColor,
+                  fontSize: 13,
+                ),
+              ),
+              horizontalSpace8,
+              // يمكن إضافة شارة "كاتب المنشور" هنا إذا لزم الأمر
+            ],
           ),
           verticalSpace4,
           EmojiText(
             text: comment.text,
             style: TextStylesManager.regular14.copyWith(
-              height: 1.4,
-              color: ColorsManager.textColor,
+              height: 1.5,
+              color: ColorsManager.textColor.withValues(alpha: 0.9),
+              fontSize: 14,
             ),
           ),
         ],

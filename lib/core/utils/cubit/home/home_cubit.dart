@@ -56,12 +56,12 @@ class HomeCubit extends Cubit<HomeStates> {
   List<PostModel> userPosts = [];
   List<NotificationModel> notifications = [];
 
-  File? postImage;
+  List<File> postImages = [];
   File? profileImage;
   File? coverImage;
-  File? editPostImage;
+  List<File> editPostImages = [];
 
-  String? editPostImageUrl;
+  List<String>? editPostImageUrls;
   int unreadNotificationsCount = 0;
   bool isEmojiVisible = false;
 
@@ -162,18 +162,21 @@ class HomeCubit extends Cubit<HomeStates> {
     if (userModel == null) return;
 
     final postText = text.trim();
-    final imageToUpload = postImage;
+    final imagesToUpload = List<File>.from(postImages);
 
     // UI Reset
     postTextController.clear();
-    postImage = null;
+    postImages = [];
     isEmojiVisible = false;
 
     emit(HomeAddPostLoadingState());
     try {
-      String? imageUrl;
-      if (imageToUpload != null) {
-        imageUrl = await uploadImageToCloudinary(imageToUpload);
+      final List<String> imageUrls = [];
+      if (imagesToUpload.isNotEmpty) {
+        for (var image in imagesToUpload) {
+          final url = await uploadImageToCloudinary(image);
+          imageUrls.add(url);
+        }
       }
 
       await postRepo.addPost(
@@ -181,7 +184,7 @@ class HomeCubit extends Cubit<HomeStates> {
         username: userModel!.username!,
         userProfilePic: userModel!.photoUrl!,
         text: postText.isNotEmpty ? postText : null,
-        imageUrl: imageUrl,
+        imageUrls: imageUrls.isNotEmpty ? imageUrls : null,
       );
       emit(HomeAddPostSuccessState());
     } catch (e) {
@@ -215,15 +218,14 @@ class HomeCubit extends Cubit<HomeStates> {
     }
   }
 
-  // --- Comments & Replies ---
+  // --- Comments & Replies (Optimized for Sub-collections) ---
 
   Future<void> addComment(String postId, String postOwnerId) async {
-    if (userModel == null) return;
-
     final text = commentController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || userModel == null) return;
 
     commentController.clear();
+    isEmojiVisible = false;
     emit(HomeAddCommentLoadingState());
 
     try {
@@ -236,7 +238,7 @@ class HomeCubit extends Cubit<HomeStates> {
       );
 
       if (postOwnerId != userModel!.uid) {
-        await _sendNotification(
+        _sendNotification(
           receiverId: postOwnerId,
           type: 'comment',
           postId: postId,
@@ -257,8 +259,9 @@ class HomeCubit extends Cubit<HomeStates> {
     required String commentOwnerId,
     required String text,
   }) async {
-    if (userModel == null) return;
-    emit(HomeAddCommentLoadingState());
+    final replyText = text.trim();
+    if (replyText.isEmpty || userModel == null) return;
+
     try {
       await postRepo.addReply(
         postId: postId,
@@ -266,17 +269,17 @@ class HomeCubit extends Cubit<HomeStates> {
         userId: userModel!.uid!,
         username: userModel!.username!,
         userProfilePic: userModel!.photoUrl!,
-        text: text,
+        text: replyText,
       );
 
       if (commentOwnerId != userModel!.uid) {
-        await _sendNotification(
+        _sendNotification(
           receiverId: commentOwnerId,
           type: 'comment',
           postId: postId,
           arMsg: "رد على تعليقك 💬",
           enMsg: "replied to your comment 💬",
-          content: text,
+          content: replyText,
         );
       }
       emit(HomeAddCommentSuccessState());
@@ -482,17 +485,15 @@ class HomeCubit extends Cubit<HomeStates> {
   }
 
   Future<void> pickPostImage() async {
-    final pickedFile = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-    );
-    if (pickedFile != null) {
-      postImage = File(pickedFile.path);
+    final List<XFile> pickedFiles = await ImagePicker().pickMultiImage();
+    if (pickedFiles.isNotEmpty) {
+      postImages.addAll(pickedFiles.map((file) => File(file.path)));
       emit(HomePickPostImageState());
     }
   }
 
-  void removePostImage() {
-    postImage = null;
+  void removePostImage(int index) {
+    postImages.removeAt(index);
     emit(HomeRemovePostImageState());
   }
 
@@ -519,27 +520,32 @@ class HomeCubit extends Cubit<HomeStates> {
 
   void initEditPost(PostModel post) {
     editPostController.text = post.text ?? '';
-    editPostImage = null;
-    editPostImageUrl = post.imageUrl;
+    editPostImages = [];
+    editPostImageUrls = post.imageUrls != null
+        ? List.from(post.imageUrls!)
+        : null;
     emit(HomeInitEditPostState());
   }
 
   Future<void> updatePost({required String postId}) async {
     emit(HomeUpdatePostLoadingState());
     try {
-      String? imageUrl = editPostImageUrl;
-      if (editPostImage != null) {
-        imageUrl = await uploadImageToCloudinary(editPostImage!);
+      final List<String> imageUrls = editPostImageUrls ?? [];
+      if (editPostImages.isNotEmpty) {
+        for (var image in editPostImages) {
+          final url = await uploadImageToCloudinary(image);
+          imageUrls.add(url);
+        }
       }
 
       await postRepo.updatePost(
         postId: postId,
         text: editPostController.text.trim(),
-        imageUrl: imageUrl,
+        imageUrls: imageUrls.isNotEmpty ? imageUrls : null,
       );
 
       editPostController.clear();
-      editPostImage = null;
+      editPostImages = [];
       emit(HomeUpdatePostSuccessState());
     } catch (e) {
       emit(HomeUpdatePostErrorState(e.toString()));
@@ -567,18 +573,19 @@ class HomeCubit extends Cubit<HomeStates> {
   }
 
   Future<void> pickEditPostImage() async {
-    final pickedFile = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-    );
-    if (pickedFile != null) {
-      editPostImage = File(pickedFile.path);
+    final List<XFile> pickedFiles = await ImagePicker().pickMultiImage();
+    if (pickedFiles.isNotEmpty) {
+      editPostImages.addAll(pickedFiles.map((file) => File(file.path)));
       emit(HomeInitEditPostState());
     }
   }
 
-  void removeEditPostImage() {
-    editPostImage = null;
-    editPostImageUrl = null;
+  void removeEditPostImage(int index, {bool isUrl = false}) {
+    if (isUrl) {
+      editPostImageUrls?.removeAt(index);
+    } else {
+      editPostImages.removeAt(index);
+    }
     emit(HomeRemoveEditPostImageState());
   }
 

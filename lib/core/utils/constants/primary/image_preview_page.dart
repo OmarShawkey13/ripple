@@ -1,56 +1,75 @@
 import 'package:flutter/material.dart';
-import 'package:ripple/core/utils/extensions/context_extension.dart';
+import 'package:flutter/services.dart';
+import 'package:ripple/core/utils/constants/primary/image_preview_app_bar.dart';
+import 'package:ripple/core/utils/constants/primary/image_preview_dots.dart';
+import 'package:ripple/core/utils/constants/primary/image_preview_item.dart';
 
-class ImagePreviewPage extends StatelessWidget {
-  final String url;
+class ImagePreviewPage extends StatefulWidget {
+  final List<String> urls;
+  final int initialIndex;
 
-  const ImagePreviewPage({super.key, required this.url});
+  const ImagePreviewPage({
+    super.key,
+    required this.urls,
+    this.initialIndex = 0,
+  });
+
+  @override
+  State<ImagePreviewPage> createState() => _ImagePreviewPageState();
+}
+
+class _ImagePreviewPageState extends State<ImagePreviewPage> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+
+    // ضبط شريط الحالة ليكون شفافاً ومتوافقاً مع الخلفية السوداء
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white, size: 28),
-          onPressed: () => context.pop,
-        ),
+      extendBodyBehindAppBar: true,
+      appBar: ImagePreviewAppBar(
+        currentIndex: _currentIndex,
+        totalCount: widget.urls.length,
+        onClose: () => Navigator.pop(context),
       ),
-      body: Center(
-        child: Hero(
-          tag: url,
-          child: InteractiveViewer(
-            maxScale: 4,
-            minScale: 1,
-            child: Image.network(
-              url,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                final progress = loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded /
-                          loadingProgress.expectedTotalBytes!
-                    : null;
-                return Center(
-                  child: SizedBox(
-                    width: 50,
-                    height: 50,
-                    child: CircularProgressIndicator(
-                      value: progress,
-                      color: Colors.white,
-                    ),
-                  ),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return const Center(
-                  child: Icon(Icons.error, color: Colors.red, size: 50),
-                );
-              },
-            ),
+      body: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            itemCount: widget.urls.length,
+            onPageChanged: (index) => setState(() => _currentIndex = index),
+            physics: const BouncingScrollPhysics(),
+            itemBuilder: (context, index) {
+              return ImagePreviewItem(imageUrl: widget.urls[index]);
+            },
           ),
-        ),
+          ImagePreviewDots(
+            currentIndex: _currentIndex,
+            totalCount: widget.urls.length,
+          ),
+        ],
       ),
     );
   }

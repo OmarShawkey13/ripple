@@ -53,6 +53,7 @@
   "bio": "Bio",
   "notifications": "Notifications",
   "no_notifications": "No notifications yet",
+  "no_comments_yet": "No comments yet",
   "delete": "Delete",
   "copied": "Copied to clipboard",
   "about_ripple": "About Ripple",
@@ -62,5 +63,9 @@
   "developer": "Developer",
   "made_with_love": "Made with ❤️ using Flutter",
   "error": "Error",
-  "back": "Back"
+  "back": "Back",
+  "ripple_user": "Ripple User",
+  "ripple_social_app": "Ripple Social App",
+  "ripple_version": "Ripple v1.0.0",
+  "settings": "Settings"
 }

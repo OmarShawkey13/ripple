@@ -21,38 +21,31 @@ class CommentActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, top: 4, bottom: 4),
-      child: Row(
-        children: [
-          Text(
-            _formatTimestamp(timestamp),
-            style: TextStylesManager.regular12.copyWith(
-              color: ColorsManager.textSecondaryColor.withValues(alpha: 0.7),
-              fontSize: 11,
+    return Row(
+      children: [
+        Text(
+          _formatTimestamp(timestamp),
+          style: TextStylesManager.regular12.copyWith(
+            color: ColorsManager.textSecondaryColor.withValues(alpha: 0.6),
+            fontSize: 11,
+          ),
+        ),
+        horizontalSpace16,
+        GestureDetector(
+          onTap: onReplyTap,
+          child: Text(
+            isReplying
+                ? appTranslation().get('cancel')
+                : appTranslation().get('reply'),
+            style: TextStylesManager.bold12.copyWith(
+              color: isReplying
+                  ? ColorsManager.error.withValues(alpha: 0.8)
+                  : ColorsManager.textSecondaryColor.withValues(alpha: 0.8),
+              fontSize: 12,
             ),
           ),
-          horizontalSpace16,
-          InkWell(
-            onTap: onReplyTap,
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Text(
-                isReplying
-                    ? appTranslation().get('cancel')
-                    : appTranslation().get('reply'),
-                style: TextStylesManager.bold12.copyWith(
-                  color: isReplying
-                      ? ColorsManager.error
-                      : ColorsManager.primary,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

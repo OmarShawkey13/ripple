@@ -23,6 +23,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _refreshData();
+  }
+
+  void _refreshData() {
     Future.microtask(() {
       homeCubit.getUserData();
       homeCubit.getPosts();
@@ -33,60 +37,57 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        return Scaffold(
+          drawer: const HomeDrawer(),
+          appBar: const HomeAppBar(),
+          body: RefreshIndicator(
+            onRefresh: () async => homeCubit.getPosts(),
+            color: ColorsManager.primary,
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                const SliverToBoxAdapter(child: WhatsNewWidget()),
+                _buildPostsList(),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPostsList() {
+    return BlocBuilder<HomeCubit, HomeStates>(
+      buildWhen: (previous, current) =>
+          current is HomeGetFeedPostsLoadingState ||
+          current is HomeGetFeedPostsSuccessState ||
+          current is HomeGetFeedPostsErrorState ||
+          current is HomeDeletePostSuccessState,
       builder: (context, state) {
-        return BlocBuilder<HomeCubit, HomeStates>(
-          buildWhen: (previous, current) =>
-              current is HomeGetFeedPostsLoadingState ||
-              current is HomeGetFeedPostsSuccessState ||
-              current is HomeGetFeedPostsErrorState ||
-              current is HomeGetCurrentUserSuccessState ||
-              current is HomeGetCurrentUserErrorState ||
-              current is HomeLikePostSuccessState ||
-              current is HomeDeletePostSuccessState ||
-              current is HomeUpdatePostSuccessState,
-          builder: (context, state) {
-            return Scaffold(
-              drawer: const HomeDrawer(),
-              appBar: const HomeAppBar(),
-              body: RefreshIndicator(
-                onRefresh: () async => homeCubit.getPosts(),
-                color: ColorsManager.primary,
-                child: CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    const SliverToBoxAdapter(
-                      child: WhatsNewWidget(),
-                    ),
-                    ConditionalBuilder(
-                      loadingState:
-                          state is HomeGetFeedPostsLoadingState &&
-                          homeCubit.posts.isEmpty,
-                      loadingBuilder: (context) => const SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: LoadingIndicator(),
-                      ),
-                      successBuilder: (context) => SliverPadding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        sliver: SliverList.separated(
-                          itemBuilder: (context, index) => PostCard(
-                            post: homeCubit.posts[index],
-                          ),
-                          separatorBuilder: (context, index) => Divider(
-                            height: 1,
-                            thickness: 0.5,
-                            color: ColorsManager.outline.withValues(alpha: 0.3),
-                            indent: 16,
-                            endIndent: 16,
-                          ),
-                          itemCount: homeCubit.posts.length,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+        return ConditionalBuilder(
+          loadingState:
+              state is HomeGetFeedPostsLoadingState && homeCubit.posts.isEmpty,
+          loadingBuilder: (context) => const SliverFillRemaining(
+            hasScrollBody: false,
+            child: LoadingIndicator(),
+          ),
+          successBuilder: (context) => SliverPadding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            sliver: SliverList.separated(
+              itemCount: homeCubit.posts.length,
+              itemBuilder: (context, index) => PostCard(
+                post: homeCubit.posts[index],
               ),
-            );
-          },
+              separatorBuilder: (context, index) => Divider(
+                height: 1,
+                thickness: 0.5,
+                color: ColorsManager.outline.withValues(alpha: 0.3),
+                indent: 16,
+                endIndent: 16,
+              ),
+            ),
+          ),
         );
       },
     );

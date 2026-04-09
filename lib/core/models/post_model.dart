@@ -8,7 +8,7 @@ class PostModel {
   final String userProfilePic;
   final Timestamp timestamp;
   final String? text;
-  final String? imageUrl;
+  final List<String>? imageUrls;
   final List<String> likes;
   final List<CommentModel> comments;
 
@@ -19,7 +19,7 @@ class PostModel {
     required this.userProfilePic,
     required this.timestamp,
     this.text,
-    this.imageUrl,
+    this.imageUrls,
     required this.likes,
     required this.comments,
   });
@@ -32,7 +32,7 @@ class PostModel {
       'userProfilePic': userProfilePic,
       'timestamp': timestamp,
       'text': text,
-      'imageUrl': imageUrl,
+      'imageUrls': imageUrls,
       'likes': likes,
       'comments': comments.map((c) => c.toMap()).toList(),
     };
@@ -46,7 +46,7 @@ class PostModel {
       userProfilePic: map['userProfilePic'] ?? '',
       timestamp: map['timestamp'] ?? Timestamp.now(),
       text: map['text'],
-      imageUrl: map['imageUrl'],
+      imageUrls: List<String>.from(map['imageUrls'] ?? []),
       likes: List<String>.from(map['likes'] ?? []),
       comments: (map['comments'] as List<dynamic>? ?? [])
           .asMap()
@@ -63,7 +63,7 @@ class PostModel {
     String? userProfilePic,
     Timestamp? timestamp,
     String? text,
-    String? imageUrl,
+    List<String>? imageUrls,
     List<String>? likes,
     List<CommentModel>? comments,
   }) {
@@ -74,7 +74,7 @@ class PostModel {
       userProfilePic: userProfilePic ?? this.userProfilePic,
       timestamp: timestamp ?? this.timestamp,
       text: text ?? this.text,
-      imageUrl: imageUrl ?? this.imageUrl,
+      imageUrls: imageUrls ?? this.imageUrls,
       likes: likes ?? this.likes,
       comments: comments ?? this.comments,
     );

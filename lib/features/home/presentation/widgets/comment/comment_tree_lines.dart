@@ -8,29 +8,29 @@ class CommentTreeLines extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lineColor = ColorsManager.dividerColor.withValues(alpha: 0.2);
+    final lineColor = ColorsManager.outline.withValues(alpha: 0.2);
 
     return SizedBox(
-      width: 24, // Reduced width
+      width: 24,
+      height:
+          double.infinity, // سيتم تقييده بواسطة IntrinsicHeight في المكون الأب
       child: Stack(
         children: [
           Positioned(
-            left: 8,
+            left: 12,
             top: 0,
-            bottom: isLast
-                ? 16
-                : 0, // Adjust bottom to stop line for last reply
+            bottom: isLast ? 22 : 0, // يتوقف الخط عند مستوى الرد الأخير
             child: Container(
-              width: 1.5,
+              width: 1,
               color: lineColor,
             ),
           ),
           Positioned(
-            left: 8,
-            top: 16, // Align with avatar center
+            left: 12,
+            top: 22, // محاذاة مع منتصف الصورة الرمزية تقريباً
             child: Container(
               width: 12,
-              height: 1.5,
+              height: 1,
               color: lineColor,
             ),
           ),

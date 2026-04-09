@@ -30,7 +30,7 @@ class AddPostScreen extends StatelessWidget {
         if (state is HomeAddPostSuccessState) {
           context.pop;
           homeCubit.postTextController.clear();
-          homeCubit.postImage = null;
+          homeCubit.postImages = [];
         } else if (state is HomeAddPostErrorState) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.error)),

@@ -24,56 +24,49 @@ class ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: ColorsManager.backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          ProfileImage(user: user, profileRadius: profileRadius),
-          verticalSpace16,
-          EmojiText(
-            text: user.username ?? '',
-            style: TextStylesManager.bold26.copyWith(
-              letterSpacing: -0.5,
-              color: ColorsManager.textColor,
-            ),
-          ),
-          if (user.bio != null && user.bio!.isNotEmpty) ...[
-            verticalSpace8,
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-              child: EmojiText(
-                text: user.bio!,
-                textAlign: TextAlign.center,
-                style: TextStylesManager.regular14.copyWith(
-                  color: ColorsManager.textSecondaryColor,
-                  height: 1.5,
-                ),
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.topCenter,
+      children: [
+        // Background Container
+        Column(
+          children: [
+            ProfileImage(user: user, profileRadius: profileRadius),
+            verticalSpace16,
+            EmojiText(
+              text: user.username ?? '',
+              style: TextStylesManager.bold26.copyWith(
+                letterSpacing: -0.5,
+                color: ColorsManager.textColor,
               ),
             ),
+            if (user.bio != null && user.bio!.isNotEmpty) ...[
+              verticalSpace8,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: EmojiText(
+                  text: user.bio!,
+                  textAlign: TextAlign.center,
+                  style: TextStylesManager.regular14.copyWith(
+                    color: ColorsManager.textSecondaryColor,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+            verticalSpace24,
+            ProfileStats(user: user, postCount: postCount),
+            verticalSpace24,
+            ProfileActionButtons(user: user, currentUser: currentUser),
+            verticalSpace24,
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: ColorsManager.dividerColor.withValues(alpha: 0.05),
+            ),
           ],
-          verticalSpace24,
-          ProfileStats(user: user, postCount: postCount),
-          verticalSpace24,
-          ProfileActionButtons(user: user, currentUser: currentUser),
-          verticalSpace24,
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: ColorsManager.dividerColor.withValues(alpha: 0.05),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

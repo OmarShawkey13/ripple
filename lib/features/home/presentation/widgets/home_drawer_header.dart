@@ -5,6 +5,7 @@ import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/theme/emoji_text.dart';
 import 'package:ripple/core/theme/text_styles.dart';
 import 'package:ripple/core/utils/constants/assets_helper.dart';
+import 'package:ripple/core/utils/constants/constants.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
 import 'package:ripple/core/utils/cubit/home/home_cubit.dart';
 import 'package:ripple/core/utils/cubit/home/home_state.dart';
@@ -69,7 +70,7 @@ class HomeDrawerHeader extends StatelessWidget {
                   ),
                   verticalSpace16,
                   EmojiText(
-                    text: user?.username ?? 'Ripple User',
+                    text: user?.username ?? appTranslation().get('ripple_user'),
                     style: TextStylesManager.bold20.copyWith(
                       color:
                           user?.coverUrl != null && user!.coverUrl!.isNotEmpty
@@ -81,7 +82,8 @@ class HomeDrawerHeader extends StatelessWidget {
                   ),
                   verticalSpace4,
                   EmojiText(
-                    text: user?.bio ?? 'ripple social app',
+                    text:
+                        user?.bio ?? appTranslation().get('ripple_social_app'),
                     style: TextStylesManager.regular14.copyWith(
                       color:
                           user?.coverUrl != null && user!.coverUrl!.isNotEmpty
