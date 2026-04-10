@@ -36,7 +36,7 @@ class CommentList extends StatelessWidget {
                     alpha: 0.3,
                   ),
                 ),
-                const SizedBox(height: 12),
+                verticalSpace12,
                 Text(
                   appTranslation().get('no_comments_yet'),
                   style: TextStyle(
