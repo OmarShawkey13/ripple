@@ -23,11 +23,6 @@ class HomeDrawer extends StatelessWidget {
         final isArabic = themeCubit.isArabicLang;
         return Drawer(
           backgroundColor: ColorsManager.backgroundColor,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.horizontal(
-              right: Radius.circular(32),
-            ),
-          ),
           child: Column(
             children: [
               const HomeDrawerHeader(),
