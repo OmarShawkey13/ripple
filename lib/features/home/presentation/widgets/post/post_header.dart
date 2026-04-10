@@ -5,6 +5,7 @@ import 'package:ripple/core/theme/colors.dart';
 import 'package:ripple/core/theme/emoji_text.dart';
 import 'package:ripple/core/theme/text_styles.dart';
 import 'package:ripple/core/utils/constants/spacing.dart';
+import 'package:ripple/core/utils/constants/constants.dart';
 import 'package:ripple/features/home/presentation/widgets/post/post_menu.dart';
 
 class PostHeader extends StatelessWidget {
@@ -59,6 +60,6 @@ class PostHeader extends StatelessWidget {
     if (difference.inDays >= 1) return '${difference.inDays}d';
     if (difference.inHours >= 1) return '${difference.inHours}h';
     if (difference.inMinutes >= 1) return '${difference.inMinutes}m';
-    return 'الآن';
+    return appTranslation().get('now');
   }
 }
